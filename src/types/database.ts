@@ -145,6 +145,8 @@ export interface Order {
   delivery_observations: string | null;
   pagoplux_transaction_id: string | null;
   pagoplux_response_payload: Record<string, unknown> | null;
+  pagomedios_payment_token: string | null;
+  pagomedios_response_payload: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
 }

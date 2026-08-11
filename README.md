@@ -6,35 +6,38 @@ Copy `.env.example` to `.env.local` and fill in the InsForge URL and anon key. K
 
 InsForge sends signup verification emails through its configured auth email provider. SMTP credentials do not belong in this app. The signup flow sends the built-in 6-digit OTP, and `/cliente/verificar-otp` verifies it with `auth.verifyEmail()`.
 
-## PagoPlux Sandbox
+## Pagomedios V2
 
-PagoPlux resolves the sandbox merchant from `PayboxRemail`. It must be a valid sandbox establishment email; `sandbox_establishment@pagoplux.com` is not valid and causes the “Missing Paybox parameters, enter the merchant name” error.
+Pagomedios creates a hosted payment request through its V2 API and redirects customers to `data.url`. The documented API host is `https://api.abitmedia.cloud/pagomedios/v2`; credentials and environment are controlled by Pagomedios account configuration.
 
 Required local values in `.env.local`:
 
 ```env
-NEXT_PUBLIC_PAGOPLUX_RUC=1727063198002
-NEXT_PUBLIC_PAGOPLUX_STORE_NAME=Jhordy Tests
-NEXT_PUBLIC_PAGOPLUX_MERCHANT_EMAIL=jaguas@plux.ec
+PAGOMEDIOS_API_TOKEN=your_bearer_token
+PAGOMEDIOS_NOTIFY_URL=https://your-domain.example/api/payments/pagomedios-notify
+PAGOMEDIOS_NOTIFY_SECRET=your_private_callback_secret
+PAGOMEDIOS_GENERATE_INVOICE=1
 ```
 
-Restart Next.js after changing environment variables. The integration loads PagoPlux Paybox from HTTPS, so HTTP localhost is not the root cause of the merchant error. For safer iframe and browser-cookie behavior, run local checkout over HTTPS:
+Restart Next.js after changing environment variables. Pagomedios sends payment notifications to `PAGOMEDIOS_NOTIFY_URL`, so deployed HTTPS is required for end-to-end callbacks. For local testing, expose the callback route through an HTTPS tunnel:
 
 ```bash
 npm run dev:https
 ```
 
-Open `https://localhost:3000` and accept Next.js self-signed certificate warning. If using HTTPS for auth redirects too, set `NEXT_PUBLIC_APP_URL=https://localhost:3000` in `.env.local` and restart the server. No deployment is required.
+Open `https://localhost:3000` and accept Next.js self-signed certificate warning. If using HTTPS for auth redirects too, set `NEXT_PUBLIC_APP_URL=https://localhost:3000` in `.env.local` and restart the server. A public HTTPS tunnel is still required for Pagomedios to reach the notification route.
 
-PagoPlux integration files:
+Pagomedios integration files:
 
-- `src/lib/pagoplux.ts`: Paybox script, sandbox payload, modal, callbacks.
-- `src/types/pagoplux.d.ts`: Paybox payload and browser-global types.
-- `src/app/(public)/checkout/CheckoutClient.tsx`: customer data and checkout trigger.
-- `src/app/api/payments/pagoplux-callback/route.ts`: validates approved responses and creates orders.
-- `migrations/20260805120000_create-orders.sql`: order fields for PagoPlux transaction ID and response payload.
-- `.env.example`: documented sandbox configuration template.
-- `.env.local`: active local sandbox configuration; ignored by Git.
+- `src/lib/pagomedios.ts`: server-side request creation and payment verification.
+- `src/app/(public)/checkout/CheckoutClient.tsx`: customer data and hosted-payment redirect.
+- `src/app/api/payments/pagomedios-request/route.ts`: validates cart and creates pending orders.
+- `src/app/api/payments/pagomedios-notify/route.ts`: verifies callbacks and authorizes orders.
+- `migrations/20260810120000_add-pagomedios-payment-fields.sql`: Pagomedios token and payload fields.
+- `.env.example`: documented Pagomedios configuration template.
+- `.env.local`: local credentials and callback configuration; ignored by Git.
+
+The original PagoPlux columns remain in the database schema for experimentation and rollback. They are not used by this integration.
 
 ## Getting Started
 

@@ -564,38 +564,3 @@ select:focus-visible {
 
 /* ── Selection ─────────────────────────────────────────────── */
 ::selection { background: var(--accent-light); color: var(--accent); }
-
-/* PagoPlux injects its modal inside #ButtonPaybox after page load. Keep its
-   active layer above app stacking contexts and prevent global iframe resets
-   from collapsing the payment form. */
-#ButtonPaybox {
-  position: static !important;
-  width: 1px !important;
-  height: 1px !important;
-  overflow: visible !important;
-}
-
-#paybox_modal.paybox_modal--active,
-#paybox_modal[aria-hidden="false"] {
-  position: fixed !important;
-  inset: 0 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  width: 100vw !important;
-  height: 100dvh !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  z-index: 999999 !important;
-}
-
-#paybox_modal.paybox_modal--active #iframePaybox,
-#paybox_modal[aria-hidden="false"] #iframePaybox {
-  display: block !important;
-  width: min(570px, calc(100vw - 2rem)) !important;
-  max-width: calc(100vw - 2rem) !important;
-  height: min(752px, calc(100dvh - 2rem)) !important;
-  min-height: 0 !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-}

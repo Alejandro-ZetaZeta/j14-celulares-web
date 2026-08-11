@@ -1,4 +1,4 @@
--- Orders created from PagoPlux transactions.
+-- Orders created from payment transactions. Legacy PagoPlux fields are retained for compatibility.
 CREATE TABLE IF NOT EXISTS customers (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   identification TEXT NOT NULL UNIQUE,
