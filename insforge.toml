@@ -1,5 +1,5 @@
 [auth]
-allowed_redirect_urls = ["http://localhost:3000/api/auth/callback"]
+allowed_redirect_urls = ["http://localhost:3000/api/auth/callback", "https://celulares-j14.vercel.app/api/auth/callback"]
 require_email_verification = true
 verify_email_method = "code"
 reset_password_method = "code"
@@ -13,13 +13,15 @@ require_uppercase = true
 require_special_char = true
 
 [auth.smtp]
-enabled = false
-host = ""
+enabled = true
+host = "smtp.gmail.com"
 port = 465
-username = ""
-sender_email = ""
-sender_name = ""
-min_interval_seconds = 60
+username = "oreobot94@gmail.com"
+# password is managed via secrets — run `insforge secrets add SMTP_PASSWORD "<value>"`
+password = "env(SMTP_PASSWORD)"
+sender_email = "oreobot94@gmail.com"
+sender_name = "J14Oficial"
+min_interval_seconds = 70
 
 [storage]
 max_file_size_mb = 50

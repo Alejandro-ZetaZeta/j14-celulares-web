@@ -102,7 +102,19 @@ export default function ConfiguracionClient({ settings }: { settings: SiteSettin
             <ButtonEditor id="primary-button" label="Botón primario" value={hero.primaryButton} onChange={(value) => setHero({ ...hero, primaryButton: value })} />
             <ButtonEditor id="secondary-button" label="Botón secundario" value={hero.secondaryButton} onChange={(value) => setHero({ ...hero, secondaryButton: value })} />
           </div>
-          <div className="rounded-[var(--radius-md)] border border-dashed border-[var(--border-strong)] p-4 text-[12px] text-[var(--text-secondary)]"><strong className="text-[var(--text-primary)]">Reglas editoriales:</strong> H1 máximo 500 caracteres. Párrafos máximo 500. Botones máximo 80. Rutas deben ser internas, por ejemplo <code>/catalogo</code>.</div>
+          <div className="overflow-hidden rounded-[var(--radius-md)] border border-[var(--border)] bg-black p-6" aria-hidden="true">
+            <p className="mb-5 text-[12px] font-semibold uppercase tracking-[0.14em] text-white/50">Vista previa del hero</p>
+            <div className="mx-auto max-w-2xl text-center">
+              {hero.eyebrow.visible && <p className="mb-3 text-[13px] font-medium tracking-wide text-[var(--accent)]">{hero.eyebrow.text || "Texto superior"}</p>}
+              {hero.headline.visible && <h1 className="text-fit-grow text-[clamp(2rem,7vw,5rem)] font-bold leading-[1.05] tracking-[-0.025em] text-white">{hero.headline.text || "Tu próximo smartphone, aquí."}</h1>}
+              {hero.description.visible && <p className="mx-auto mt-5 max-w-xl whitespace-pre-line text-[15px] leading-6 text-[#A1A1A6]">{hero.description.text || "Descripción de portada"}</p>}
+              <div className="mt-7 flex flex-wrap justify-center gap-3">
+                {hero.primaryButton.visible && <span className="rounded-full bg-[var(--accent)] px-5 py-2.5 text-[13px] font-medium text-white">{hero.primaryButton.text || "Botón principal"}</span>}
+                {hero.secondaryButton.visible && <span className="rounded-full border border-white/30 px-5 py-2.5 text-[13px] font-medium text-white">{hero.secondaryButton.text || "Botón secundario"}</span>}
+              </div>
+            </div>
+          </div>
+          <div className="rounded-[var(--radius-md)] border border-dashed border-[var(--border-strong)] p-4 text-[12px] text-[var(--text-secondary)]"><strong className="text-[var(--text-primary)]">Reglas editoriales:</strong> H1 máximo 500 caracteres. Párrafos máximo 500. Botones máximo 80. Hero H1 puede ampliar tipografía hasta 15% cuando el navegador lo admite. Rutas deben ser internas, por ejemplo <code>/catalogo</code>.</div>
         </section>
 
         <section className="card-apple space-y-6 p-6 hover:!transform-none"><div><p className="catalog-kicker">Operación</p><h2 className="mt-1 text-[21px] font-bold">Valores generales</h2></div><div className="grid gap-5 md:grid-cols-2"><div><label htmlFor="tax-rate" className="text-[14px] font-semibold">IVA aplicado a productos (%)</label><input id="tax-rate" type="number" min="0" max="100" step="0.01" value={taxRate} onChange={(event) => setTaxRate(event.target.value)} className={inputClass} required /><p className="mt-2 text-[12px] text-[var(--text-tertiary)]">Usado para carrito, PagoPlux y nuevas órdenes.</p></div><div><label htmlFor="whatsapp-number" className="text-[14px] font-semibold">WhatsApp para consultas</label><input id="whatsapp-number" type="tel" inputMode="numeric" value={whatsappNumber} onChange={(event) => setWhatsappNumber(event.target.value)} className={inputClass} required /><p className="mt-2 text-[12px] text-[var(--text-tertiary)]">Código de país, sin espacios ni símbolo +.</p></div></div></section>

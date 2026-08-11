@@ -26,6 +26,26 @@ export default async function HomePage() {
           }}
         />
 
+        {/* Mobile-only artwork: atmospheric silhouettes behind the copy */}
+        <div aria-hidden="true" className="absolute inset-0 pointer-events-none lg:hidden">
+          <Image
+            src="/hero-mobile-left.png"
+            alt=""
+            width={180}
+            height={240}
+            className="absolute -left-2 top-[-2rem] h-[10rem] w-[8rem] object-contain opacity-15 select-none"
+            priority
+          />
+          <Image
+            src="/hero-mobile-right.png"
+            alt=""
+            width={480}
+            height={640}
+            className="absolute -right-8 bottom-4 h-[20rem] w-[16rem] rotate-12 object-contain opacity-15 select-none"
+            priority
+          />
+        </div>
+
         {/* 3-column hero grid: image | content | image */}
         <div className="w-full section-padding relative z-10 px-6">
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] items-center gap-8">
@@ -37,19 +57,19 @@ export default async function HomePage() {
                 alt="Persona con brazos cruzados"
                 width={640}
                 height={780}
-                className="w-[500px] h-auto object-contain drop-shadow-2xl select-none"
+                className="w-[min(500px,22vw)] h-auto object-contain drop-shadow-2xl select-none"
                 priority
               />
             </AnimatedSection>
 
             {/* Center content */}
-            <div className="text-center">
+            <div className="min-w-0 w-full max-w-full justify-self-center text-center lg:w-[min(680px,45vw)]">
               <AnimatedSection delay={0}>
                 {hero.eyebrow.visible && <p className="text-[var(--accent)] text-[15px] font-medium tracking-wide mb-4">{hero.eyebrow.text}</p>}
               </AnimatedSection>
 
               <AnimatedSection delay={0.08}>
-                {hero.headline.visible && <h1 className="text-hero text-white mb-6 max-w-[680px] mx-auto">{hero.headline.text}</h1>}
+                {hero.headline.visible && <h1 className="text-hero text-fit-grow text-white mb-6 max-w-[680px] mx-auto">{hero.headline.text}</h1>}
               </AnimatedSection>
 
               <AnimatedSection delay={0.16}>
@@ -71,7 +91,7 @@ export default async function HomePage() {
                 alt="J14 Premium"
                 width={640}
                 height={780}
-                className="w-[500px] h-auto object-contain drop-shadow-2xl select-none"
+                className="w-[min(500px,22vw)] h-auto object-contain drop-shadow-2xl select-none"
                 priority
               />
             </AnimatedSection>
@@ -95,7 +115,7 @@ export default async function HomePage() {
             </p>
           </AnimatedSection>
 
-          {homeCollections.length > 0 ? <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+          {homeCollections.length > 0 ? <div className="grid grid-cols-1 gap-5 sm:relative sm:left-1/2 sm:w-screen sm:-translate-x-1/2 sm:px-5 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)_minmax(0,1fr)]">
             {homeCollections.map((collection, i) => {
               const gradients = ["from-[#1C1C1E] to-[#2C2C2E]", "from-[#0071E3] to-[#00457C]", "from-[#30D158] to-[#248A3D]"];
               return (
@@ -142,7 +162,7 @@ export default async function HomePage() {
                     </div>
                     <div className="featured-showcase-copy">
                       <p className="catalog-kicker !text-white/60">{product.featured_eyebrow || "Selección J14"}</p>
-                      <h3 className="mt-3 text-[clamp(1.8rem,4vw,3.4rem)] font-semibold tracking-[-.045em] text-white">{product.featured_headline || `${product.brand} ${product.model}`}</h3>
+                      <h3 className="text-fit-grow mt-3 text-[clamp(1.8rem,4vw,3.4rem)] font-semibold tracking-[-.045em] text-white">{product.featured_headline || `${product.brand} ${product.model}`}</h3>
                        <div className="mt-7 flex items-center gap-5"><span className="text-[14px] font-medium text-white/80">Desde ${price.toLocaleString("en-US")}</span><span className="rounded-full bg-white px-4 py-2 text-[13px] font-semibold text-[var(--text-primary)]">{product.featured_cta || "Conocer equipo"} →</span></div>
                     </div>
                   </Link>
