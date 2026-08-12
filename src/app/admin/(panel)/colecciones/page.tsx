@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { requireAdmin } from "@/lib/auth/roles";
 import { getAllCollections } from "@/lib/actions/admin-collections";
 import CollectionsClient from "./CollectionsClient";
+import AdminPanelSkeleton from "../AdminPanelSkeleton";
 
 async function CollectionsContent() {
   await requireAdmin();
@@ -10,5 +11,5 @@ async function CollectionsContent() {
 }
 
 export default function CollectionsPage() {
-  return <Suspense fallback={<div className="p-8 text-[var(--text-secondary)]">Cargando colecciones...</div>}><CollectionsContent /></Suspense>;
+  return <Suspense fallback={<AdminPanelSkeleton variant="collections" />}><CollectionsContent /></Suspense>;
 }

@@ -3,7 +3,10 @@
 import { Suspense } from "react";
 import { Skeleton } from "boneyard-js/react";
 
-type SkeletonVariant = "dashboard" | "products" | "tickets" | "financing" | "sales" | "shell";
+// Every new admin route should use one of these variants in its Suspense fallback
+// instead of rendering plain loading text. Add a focused variant here when its
+// layout differs materially from the shared table, settings, or form shapes.
+type SkeletonVariant = "dashboard" | "products" | "collections" | "settings" | "tickets" | "financing" | "sales" | "form" | "shell";
 
 function Bone({ className }: { className: string }) {
   return <span className={`block rounded-md bg-black/[0.08] ${className}`} aria-hidden="true" />;
@@ -70,6 +73,60 @@ function FinancingSkeleton() {
   );
 }
 
+function CollectionsSkeleton() {
+  return (
+    <div className="p-8" aria-label="Cargando colecciones" role="status">
+      <Bone className="h-8 w-48" />
+      <Bone className="mt-3 h-4 w-72" />
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, index) => (
+          <div key={index} className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-5">
+            <Bone className="h-32 rounded-[var(--radius-md)]" />
+            <Bone className="mt-4 h-5 w-32" />
+            <Bone className="mt-2 h-4 w-48" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SettingsSkeleton() {
+  return (
+    <div className="p-8" aria-label="Cargando configuración" role="status">
+      <Bone className="h-8 w-56" />
+      <Bone className="mt-3 h-4 w-80" />
+      <div className="mt-8 max-w-3xl space-y-5 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-6">
+        {Array.from({ length: 5 }).map((_, index) => (
+          <div key={index}>
+            <Bone className="mb-2 h-3 w-28" />
+            <Bone className="h-11 w-full rounded-[var(--radius-sm)]" />
+          </div>
+        ))}
+        <Bone className="h-11 w-32 rounded-full" />
+      </div>
+    </div>
+  );
+}
+
+function FormSkeleton() {
+  return (
+    <div className="p-8" aria-label="Cargando formulario" role="status">
+      <Bone className="h-8 w-64" />
+      <Bone className="mt-3 h-4 w-80" />
+      <div className="mt-8 grid max-w-4xl gap-5 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-6 md:grid-cols-2">
+        {Array.from({ length: 8 }).map((_, index) => (
+          <div key={index} className={index === 6 ? "md:col-span-2" : ""}>
+            <Bone className="mb-2 h-3 w-28" />
+            <Bone className="h-11 w-full rounded-[var(--radius-sm)]" />
+          </div>
+        ))}
+        <Bone className="h-11 w-32 rounded-full" />
+      </div>
+    </div>
+  );
+}
+
 function SalesSkeleton() {
   return (
     <div className="p-5 sm:p-8" aria-label="Cargando ventas" role="status">
@@ -93,8 +150,14 @@ function SkeletonContent({ variant }: { variant: SkeletonVariant }) {
       return <TableSkeleton titleWidth="w-48" rows={5} />;
     case "financing":
       return <FinancingSkeleton />;
+    case "collections":
+      return <CollectionsSkeleton />;
+    case "settings":
+      return <SettingsSkeleton />;
     case "sales":
       return <SalesSkeleton />;
+    case "form":
+      return <FormSkeleton />;
     default:
       return <DashboardSkeleton />;
   }

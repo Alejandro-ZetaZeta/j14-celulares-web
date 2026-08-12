@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { requireAdmin } from "@/lib/auth/roles";
 import NuevoProductoClient from "./NuevoProductoClient";
+import AdminPanelSkeleton from "../../AdminPanelSkeleton";
 
 async function NuevoProductoContent() {
   await requireAdmin();
@@ -9,7 +10,7 @@ async function NuevoProductoContent() {
 
 export default function NuevoProductoPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-[var(--text-secondary)]">Cargando...</div>}>
+      <Suspense fallback={<AdminPanelSkeleton variant="form" />}>
       <NuevoProductoContent />
     </Suspense>
   );

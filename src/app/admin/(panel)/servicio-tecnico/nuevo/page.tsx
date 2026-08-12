@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { requireAdminOrTechnician } from "@/lib/auth/roles";
 import { getClientProfiles } from "@/lib/actions/admin-service";
 import NuevoTicketClient from "./NuevoTicketClient";
+import AdminPanelSkeleton from "../../AdminPanelSkeleton";
 
 async function NuevoTicketContent() {
   await requireAdminOrTechnician();
@@ -11,7 +12,7 @@ async function NuevoTicketContent() {
 
 export default function NuevoTicketPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-[var(--text-secondary)]">Cargando...</div>}>
+      <Suspense fallback={<AdminPanelSkeleton variant="form" />}>
       <NuevoTicketContent />
     </Suspense>
   );

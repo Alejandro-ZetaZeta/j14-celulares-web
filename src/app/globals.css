@@ -446,6 +446,138 @@ body {
 .status-dot.amber { background: var(--status-amber); animation: pulse-amber 2s infinite; }
 .status-dot.blue  { background: var(--status-blue); }
 
+/* ── Admin Sidebar ──────────────────────────────────────────── */
+.admin-panel-shell {
+  height: 100dvh;
+  max-height: 100dvh;
+}
+
+.admin-sidebar {
+  width: 15rem;
+  position: relative;
+  z-index: 30;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  transition: width 420ms var(--ease-apple), box-shadow 420ms var(--ease-apple);
+}
+
+.admin-sidebar::after {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 1px;
+  background: linear-gradient(180deg, transparent, rgba(255,255,255,.2), transparent);
+  content: "";
+  opacity: .35;
+  pointer-events: none;
+}
+
+.admin-sidebar.is-collapsed {
+  width: 4.75rem;
+  box-shadow: 12px 0 30px rgba(0, 0, 0, .08);
+}
+
+.admin-sidebar__brand {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  min-height: 73px;
+}
+
+.admin-sidebar.is-collapsed .admin-sidebar__brand {
+  flex-direction: column;
+  justify-content: center;
+  gap: .45rem;
+  padding-inline: .5rem;
+}
+
+.admin-sidebar.is-collapsed .admin-sidebar__brand > a {
+  justify-content: center;
+  width: 100%;
+}
+
+.admin-sidebar__brand-name,
+.admin-sidebar__label,
+.admin-sidebar__section-label {
+  overflow: hidden;
+  white-space: nowrap;
+  transition: opacity 180ms ease, max-width 320ms var(--ease-apple), transform 320ms var(--ease-apple);
+}
+
+.admin-sidebar__brand-name,
+.admin-sidebar__label { max-width: 12rem; }
+
+.admin-sidebar.is-collapsed .admin-sidebar__brand-name,
+.admin-sidebar.is-collapsed .admin-sidebar__label,
+.admin-sidebar.is-collapsed .admin-sidebar__section-label {
+  max-width: 0;
+  opacity: 0;
+  transform: translateX(-8px);
+  pointer-events: none;
+}
+
+.admin-sidebar__toggle {
+  display: grid;
+  width: 1.75rem;
+  height: 1.75rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 999px;
+  background: rgba(255,255,255,.06);
+  color: rgba(255,255,255,.72);
+  cursor: pointer;
+  font-size: 1.45rem;
+  line-height: 1;
+  transition: background 180ms ease, color 180ms ease, transform 420ms var(--ease-apple), border-color 180ms ease;
+}
+
+.admin-sidebar__toggle:hover {
+  border-color: rgba(255,255,255,.3);
+  background: rgba(255,255,255,.14);
+  color: #fff;
+}
+
+.admin-sidebar.is-collapsed .admin-sidebar__toggle { transform: rotate(180deg); }
+
+.admin-sidebar__nav-link,
+.admin-sidebar__footer-link { min-width: 0; }
+
+.admin-sidebar__nav-link { position: relative; }
+
+.admin-sidebar__nav-link[aria-current="page"]::before {
+  position: absolute;
+  left: 0;
+  width: 3px;
+  height: 1.25rem;
+  border-radius: 0 999px 999px 0;
+  background: var(--accent);
+  box-shadow: 0 0 14px rgba(0, 113, 227, .8);
+  content: "";
+  animation: admin-nav-arrive 420ms var(--ease-apple) both;
+}
+
+.admin-sidebar.is-collapsed .admin-sidebar__nav-link,
+.admin-sidebar.is-collapsed .admin-sidebar__footer-link { justify-content: center; }
+
+.admin-sidebar__icon { width: 1.25rem; flex: 0 0 1.25rem; text-align: center; }
+
+@keyframes admin-nav-arrive {
+  from { opacity: 0; transform: scaleY(0); }
+  to { opacity: 1; transform: scaleY(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-sidebar,
+  .admin-sidebar__brand-name,
+  .admin-sidebar__label,
+  .admin-sidebar__section-label,
+  .admin-sidebar__toggle { transition-duration: 0.01ms; }
+  .admin-sidebar__nav-link[aria-current="page"]::before { animation: none; }
+}
+
 @keyframes pulse-green {
   0%, 100% { box-shadow: 0 0 0 0 rgba(52, 199, 89, 0.4); }
   50%       { box-shadow: 0 0 0 6px rgba(52, 199, 89, 0); }
