@@ -36,6 +36,25 @@ PagoPlux integration files:
 - `.env.example`: documented sandbox configuration template.
 - `.env.local`: active local sandbox configuration; ignored by Git.
 
+### PagoPlux initialization contract
+
+Do not move PagoPlux SDK loading back into the payment click handler or remove
+the `preloadPaybox()` call from checkout. The SDK loads its environment
+asynchronously, creates `#pay` and `#iframePaybox` later, and binds the
+`#pay` click listener from its `window` `load` handler. The integration must:
+
+1. Preload SDK, modal, and iframe when checkout mounts.
+2. Replay `load` after `#pay` and `#iframePaybox` exist so SDK attaches its click listener.
+3. Reuse preloaded modal/iframe when opening payment.
+4. Keep fallback initialization and timeout recovery enabled.
+
+Without this sequence, first payment click can initialize PagoPlux without
+opening the modal; second click then appears to fix it.
+
+Sandbox may log Kount/Kaptcha CORS errors from `tst.kaptcha.com`. Those
+requests originate inside PagoPlux and are not controlled by this app. Treat
+them as a separate vendor issue unless they prevent the iframe from loading.
+
 ## Getting Started
 
 First, run the development server:

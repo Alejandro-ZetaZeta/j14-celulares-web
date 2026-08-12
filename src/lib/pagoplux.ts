@@ -11,6 +11,7 @@ const CSS_ID = "pagoplux-css";
 const CSS_SRC = `${PAYBOX_HOST}/css/Paybox.css`;
 const PAYBOX_ID = "pagoplux-paybox-script";
 const PAYBOX_SRC = `${PAYBOX_HOST}/paybox/index.js`;
+let payboxPreloadPromise: Promise<void> | null = null;
 
 function loadScript(id: string, src: string): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -112,6 +113,77 @@ function injectPayboxStyles(): void {
   document.head.appendChild(style);
 }
 
+async function preloadPayboxInternal(): Promise<void> {
+  if (typeof window === "undefined" || window.__payboxPreloaded) return;
+
+  try {
+    loadCss(CSS_ID, CSS_SRC);
+    injectPayboxStyles();
+
+    if (typeof window.jQuery === "undefined") {
+      await loadScript(JQUERY_ID, JQUERY_SRC);
+    }
+
+    let container = document.getElementById("ButtonPaybox");
+    if (!container) {
+      container = document.createElement("div");
+      container.id = "ButtonPaybox";
+      document.body.appendChild(container);
+    }
+
+    const merchantEmail = process.env.NEXT_PUBLIC_PAGOPLUX_MERCHANT_EMAIL?.trim() || "jaguas@plux.ec";
+    window.data = {
+      PayboxRuc: process.env.NEXT_PUBLIC_PAGOPLUX_RUC || "1790000000001",
+      PayboxName: process.env.NEXT_PUBLIC_PAGOPLUX_STORE_NAME || "PAGOPLUX",
+      PayboxRemail: merchantEmail,
+      PayboxLanguage: "es",
+      PayboxEnvironment: IS_PRODUCTION ? "prod" : "sandbox",
+      PayboxProduction: IS_PRODUCTION,
+      PayboxPagoInmediato: true,
+    };
+    window.onAuthorize = () => undefined;
+
+    if (!window.__payboxLoaded || !document.getElementById(PAYBOX_ID)) {
+      await loadScript(PAYBOX_ID, PAYBOX_SRC);
+      window.__payboxLoaded = true;
+    }
+    window.dispatchEvent(new Event("load"));
+
+    let initialized = false;
+    await new Promise<void>((resolve) => {
+      const started = Date.now();
+      const check = window.setInterval(() => {
+        const trigger = document.querySelector("#ButtonPaybox #pay, #ButtonPaybox a, #ButtonPaybox button");
+        const iframe = document.getElementById("iframePaybox");
+        if (trigger && iframe) {
+          initialized = true;
+          window.clearInterval(check);
+          // PagoPlux binds #pay's click handler after its async environment load.
+          // Replaying load now ensures the already-injected trigger receives it.
+          window.dispatchEvent(new Event("load"));
+          resolve();
+        } else if (Date.now() - started >= 5000) {
+          window.clearInterval(check);
+          resolve();
+        }
+      }, 50);
+    });
+    if (initialized) window.__payboxPreloaded = true;
+  } catch {
+    // openPaybox retries initialization if preloading cannot complete.
+  }
+}
+
+export function preloadPaybox(): Promise<void> {
+  if (typeof window === "undefined" || window.__payboxPreloaded) return Promise.resolve();
+  if (!payboxPreloadPromise) {
+    payboxPreloadPromise = preloadPayboxInternal().finally(() => {
+      payboxPreloadPromise = null;
+    });
+  }
+  return payboxPreloadPromise;
+}
+
 export async function openPaybox(
   totals: CartTotals,
   customer: PayboxCustomer,
@@ -120,12 +192,15 @@ export async function openPaybox(
   onStatus: (message: string) => void = () => undefined
 ): Promise<void> {
   try {
+    if (!window.__payboxPreloaded) await preloadPaybox();
     onStatus("Cargando librerías de PagoPlux...");
 
     loadCss(CSS_ID, CSS_SRC);
     injectPayboxStyles();
-    document.getElementById("paybox_modal")?.remove();
-    document.getElementById("pay")?.remove();
+    if (!window.__payboxPreloaded) {
+      document.getElementById("paybox_modal")?.remove();
+      document.getElementById("pay")?.remove();
+    }
 
     if (typeof window.jQuery === "undefined") {
       await loadScript(JQUERY_ID, JQUERY_SRC);
@@ -231,7 +306,7 @@ export async function openPaybox(
     }
 
     // Re-evaluar evento de carga
-    window.dispatchEvent(new Event("load"));
+    if (!window.__payboxPreloaded) window.dispatchEvent(new Event("load"));
 
     // 4. Disparar clic
     onStatus("Desplegando ventana de pago seguro...");
@@ -282,39 +357,64 @@ export async function openPaybox(
              };
            }
            return originalAjax.call(this, settings);
-         };
-          restoreAjax = () => {
-            if (jquery.ajax === patchedAjax) jquery.ajax = originalAjax;
-          };
-          jquery.ajax = patchedAjax;
-          trigger.click();
-
-          const modal = document.getElementById("paybox_modal");
-          if (!modal) {
-            reject(new Error("PagoPlux no generó su modal sandbox."));
-            return;
-          }
-
-          const opened = () => modal.classList.contains("paybox_modal--active");
-          if (opened()) {
-            resolve();
-            return;
-          }
-
-          const observer = new MutationObserver(() => {
-            if (!opened()) return;
-            observer.disconnect();
-            window.clearTimeout(timeout);
-            onStatus("Modal abierto. Completa los datos de la tarjeta.");
-            resolve();
-          });
-          const timeout = window.setTimeout(() => {
-            restoreAjax();
-            observer.disconnect();
-            reject(new Error("PagoPlux no respondió al consultar el establecimiento sandbox. Revisa la solicitud apipre.pagoplux.com en Network."));
-          }, 15000);
-          observer.observe(modal, { attributes: true, attributeFilter: ["class", "aria-hidden", "style"] });
-        } else if (attempts > 50) {
+           };
+           restoreAjax = () => {
+             if (jquery.ajax === patchedAjax) jquery.ajax = originalAjax;
+           };
+           jquery.ajax = patchedAjax;
+           let modalObserver: MutationObserver | undefined;
+           let settled = false;
+           const timeout = { id: 0 };
+           const finish = (error?: Error) => {
+             if (settled) return;
+             settled = true;
+             modalObserver?.disconnect();
+             window.clearTimeout(timeout.id);
+             restoreAjax();
+             if (error) reject(error);
+             else resolve();
+           };
+           const watchModal = (modal: HTMLElement) => {
+             const opened = () => modal.classList.contains("paybox_modal--active");
+             if (opened()) {
+               onStatus("Modal abierto. Completa los datos de la tarjeta.");
+               finish();
+               return;
+             }
+             modalObserver?.disconnect();
+             modalObserver = new MutationObserver(() => {
+               if (!opened()) return;
+               onStatus("Modal abierto. Completa los datos de la tarjeta.");
+               finish();
+             });
+             modalObserver.observe(modal, { attributes: true, attributeFilter: ["class", "aria-hidden", "style"] });
+           };
+           timeout.id = window.setTimeout(() => {
+             finish(new Error("PagoPlux no respondió al consultar el establecimiento sandbox. Revisa la solicitud apipre.pagoplux.com en Network."));
+           }, 15000);
+           modalObserver = new MutationObserver(() => {
+             const modal = document.getElementById("paybox_modal");
+             if (modal) watchModal(modal);
+           });
+           modalObserver.observe(document.body, { childList: true, subtree: true });
+           const iframe = document.getElementById("iframePaybox") as HTMLIFrameElement | null;
+           if (!iframe) {
+             trigger.click();
+           } else {
+             let clicked = false;
+             const clickWhenReady = () => {
+               if (clicked) return;
+               clicked = true;
+               trigger.click();
+             };
+             // PagoPlux binds its iframe message handlers during iframe load.
+             iframe.addEventListener("load", clickWhenReady, { once: true });
+             // Avoid blocking checkout if browser has already completed the load event.
+             window.setTimeout(clickWhenReady, 2000);
+           }
+           const modal = document.getElementById("paybox_modal");
+           if (modal) watchModal(modal);
+         } else if (attempts > 50) {
           clearInterval(interval);
           const msg = "No se pudo generar el disparador de PagoPlux.";
           reject(new Error(msg));

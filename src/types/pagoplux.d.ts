@@ -40,6 +40,7 @@ declare global {
     DataPaybox?: PayboxData;
     data?: Record<string, unknown>;
     __payboxLoaded?: boolean;
+    __payboxPreloaded?: boolean;
     onAuthorize?: (response: unknown) => void;
     jQuery?: ((...args: unknown[]) => unknown) & { fn?: Record<string, unknown> };
   }

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatCurrency } from "@/lib/cart";
-import { openPaybox } from "@/lib/pagoplux";
+import { openPaybox, preloadPaybox } from "@/lib/pagoplux";
 import { useCart } from "@/components/cart/CartProvider";
 import { insforgeBrowser } from "@/lib/insforge-browser";
 import type { PayboxCustomer } from "@/types/pagoplux";
@@ -22,6 +22,7 @@ export default function CheckoutClient({ initialIsAuthenticated = false }: { ini
   const [guestTermsAccepted, setGuestTermsAccepted] = useState(false);
 
   useEffect(() => {
+    void preloadPaybox();
     let active = true;
     void insforgeBrowser.auth.getCurrentUser().then(async ({ data }) => {
        if (!data?.user || !active) return;
