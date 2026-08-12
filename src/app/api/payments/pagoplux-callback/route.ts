@@ -2,12 +2,14 @@ import { NextResponse } from "next/server";
 import { insforgeAdmin } from "@/lib/insforge-admin";
 import { createInsforgeServerClient } from "@/lib/insforge-server";
 import { roundCents, IVA_RATE } from "@/lib/cart";
+import { calculatePromotion } from "@/lib/promotions";
 
-interface CallbackItem { variantId: string; quantity: number }
+interface CallbackItem { variantId: string; quantity: number; isGift?: boolean; giftForProductId?: string }
 interface CallbackBody {
   pagopluxResponse: unknown;
   customer: { fullName: string; cedula: string; email: string; phone: string; address: string };
   items: CallbackItem[];
+  promotionCode?: string;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -41,7 +43,7 @@ function validBody(value: unknown): value is CallbackBody {
   const customer = value.customer;
   return ["fullName", "cedula", "email", "phone", "address"].every((key) => typeof customer[key] === "string" && customer[key].trim())
     && value.items.length > 0
-    && value.items.every((item) => isRecord(item) && typeof item.variantId === "string" && typeof item.quantity === "number" && Number.isInteger(item.quantity) && item.quantity > 0);
+    && value.items.every((item) => isRecord(item) && typeof item.variantId === "string" && typeof item.quantity === "number" && Number.isInteger(item.quantity) && item.quantity > 0 && (item.isGift === undefined || typeof item.isGift === "boolean"));
 }
 
 export async function POST(request: Request) {
@@ -61,19 +63,47 @@ export async function POST(request: Request) {
   if (previousOrder?.id) return NextResponse.json({ orderId: previousOrder.id, status: previousOrder.status });
 
   const requestedQuantities = new Map<string, number>();
-  for (const item of body.items) requestedQuantities.set(item.variantId, (requestedQuantities.get(item.variantId) ?? 0) + item.quantity);
+  for (const item of body.items) if (!item.isGift) requestedQuantities.set(item.variantId, (requestedQuantities.get(item.variantId) ?? 0) + item.quantity);
   const normalizedItems = [...requestedQuantities.entries()].map(([variantId, quantity]) => ({ variantId, quantity }));
+  const giftItems = body.items.filter((item) => item.isGift);
   const variantIds = normalizedItems.map((item) => item.variantId);
   const { data: variants, error: variantsError } = await insforgeAdmin.database.from("product_variants").select("id, product_id, price, stock").in("id", variantIds);
   if (variantsError || !variants || variants.length !== variantIds.length) return NextResponse.json({ error: "Uno o más productos ya no están disponibles." }, { status: 409 });
 
   const byId = new Map(variants.map((variant) => [String(variant.id), variant as { id: string; product_id: string; price: number; stock: number }]));
-  const orderItems = normalizedItems.map((item) => {
+  const orderItems: Array<{ product_id: string; variant_id: string; quantity: number; unit_price: number; subtotal: number; is_gift: boolean; promotion_id: string | null }> = normalizedItems.map((item) => {
     const variant = byId.get(item.variantId)!;
-    return { product_id: variant.product_id, variant_id: variant.id, quantity: item.quantity, unit_price: Number(variant.price), subtotal: roundCents(Number(variant.price) * item.quantity) };
+    return { product_id: variant.product_id, variant_id: variant.id, quantity: item.quantity, unit_price: Number(variant.price), subtotal: roundCents(Number(variant.price) * item.quantity), is_gift: false, promotion_id: null };
   });
+  const giftVariantIds = [...new Set(giftItems.map((item) => item.variantId))];
+  if (giftVariantIds.length) {
+    const { data: giftVariants } = await insforgeAdmin.database.from("product_variants").select("id, product_id, price, stock").in("id", giftVariantIds);
+    const { data: giftLinks } = await insforgeAdmin.database.from("product_gifts").select("product_id, gift_product_id, quantity").in("product_id", orderItems.map((item) => item.product_id));
+    for (const gift of giftItems) {
+      const variant = giftVariants?.find((candidate) => candidate.id === gift.variantId);
+      const link = giftLinks?.find((candidate) => candidate.product_id === gift.giftForProductId && candidate.gift_product_id === variant?.product_id);
+      if (!variant || !link || gift.quantity > Number(link.quantity) * Number(orderItems.find((item) => item.product_id === gift.giftForProductId)?.quantity ?? 0) || gift.quantity > Number(variant.stock)) return NextResponse.json({ error: "Regalo inválido o sin stock." }, { status: 409 });
+      orderItems.push({ product_id: variant.product_id, variant_id: variant.id, quantity: gift.quantity, unit_price: 0, subtotal: 0, is_gift: true, promotion_id: null });
+    }
+  }
   if (orderItems.some((item) => item.quantity > Number(byId.get(item.variant_id)?.stock ?? 0))) return NextResponse.json({ error: "Stock insuficiente para uno o más productos." }, { status: 409 });
 
+  let discountAmount = 0;
+  let promotionId: string | null = null;
+  if (body.promotionCode) {
+    const promotionResult = await calculatePromotion(body.promotionCode, normalizedItems);
+    if ("error" in promotionResult) return NextResponse.json({ error: promotionResult.error }, { status: 409 });
+    discountAmount = promotionResult.discount;
+    promotionId = String(promotionResult.promotion.id);
+    const eligible = new Set(promotionResult.eligibleProductIds);
+    const eligibleGross = orderItems.filter((item) => eligible.has(item.product_id)).reduce((sum, item) => sum + item.subtotal, 0);
+    for (const item of orderItems) {
+      const allocation = eligibleGross > 0 && eligible.has(item.product_id) ? roundCents(discountAmount * item.subtotal / eligibleGross) : 0;
+      item.subtotal = roundCents(item.subtotal - allocation);
+      item.unit_price = roundCents(item.subtotal / item.quantity);
+      item.promotion_id = allocation > 0 ? promotionId : null;
+    }
+  }
   const subtotalBase15 = roundCents(orderItems.reduce((sum, item) => sum + item.subtotal, 0));
   const { data: taxSetting } = await insforgeAdmin.database.from("site_settings").select("value").eq("key", "tax_rate").maybeSingle();
   const configuredTaxRate = Number(taxSetting?.value);
@@ -100,7 +130,7 @@ export async function POST(request: Request) {
     customerId = String(data.id);
   }
 
-  const { data: order, error: orderError } = await insforgeAdmin.database.from("orders").insert([{ customer_id: customerId, user_id: userId, subtotal_base_0: 0, subtotal_base_15: subtotalBase15, iva_amount: ivaAmount, total_amount: totalAmount, status: "PENDING", pagoplux_transaction_id: transaction, pagoplux_response_payload: body.pagopluxResponse }]).select("id").single();
+  const { data: order, error: orderError } = await insforgeAdmin.database.from("orders").insert([{ customer_id: customerId, user_id: userId, subtotal_base_0: 0, subtotal_base_15: subtotalBase15, iva_amount: ivaAmount, total_amount: totalAmount, discount_amount: discountAmount, promotion_code: body.promotionCode?.trim().toUpperCase() ?? null, status: "PENDING", pagoplux_transaction_id: transaction, pagoplux_response_payload: body.pagopluxResponse }]).select("id").single();
   if (orderError || !order) return NextResponse.json({ error: "No se pudo registrar la orden." }, { status: 500 });
 
   const reservedItems: typeof orderItems = [];
@@ -119,6 +149,14 @@ export async function POST(request: Request) {
     for (const reservedItem of reservedItems) await insforgeAdmin.database.rpc("release_variant_stock", { p_variant_id: reservedItem.variant_id, p_quantity: reservedItem.quantity });
     await insforgeAdmin.database.from("orders").update({ status: "REJECTED" }).eq("id", order.id);
     return NextResponse.json({ error: "No se pudieron registrar los productos de la orden." }, { status: 500 });
+  }
+  if (promotionId) {
+    const { data: counted, error: countError } = await insforgeAdmin.database.rpc("increment_promotion_use", { p_promotion_id: promotionId });
+    if (countError || counted !== true) {
+      for (const reservedItem of reservedItems) await insforgeAdmin.database.rpc("release_variant_stock", { p_variant_id: reservedItem.variant_id, p_quantity: reservedItem.quantity });
+      await insforgeAdmin.database.from("orders").update({ status: "REJECTED" }).eq("id", order.id);
+      return NextResponse.json({ error: "Esta promoción alcanzó su límite de usos." }, { status: 409 });
+    }
   }
   await insforgeAdmin.database.from("orders").update({ status: "APPROVED" }).eq("id", order.id);
   return NextResponse.json({ orderId: order.id, status: "APPROVED" });

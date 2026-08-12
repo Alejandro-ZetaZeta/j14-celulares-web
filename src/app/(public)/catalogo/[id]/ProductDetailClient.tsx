@@ -229,6 +229,13 @@ export default function ProductDetailClient({ product, rates, whatsappNumber }: 
 
       {selectedVariant && <div className="mb-3"><AddToCartButton product={product} variant={selectedVariant} /></div>}
 
+      {(product.product_gifts ?? []).length > 0 && <section className="mb-6 rounded-[var(--radius-md)] border border-[var(--accent)]/20 bg-[var(--accent-light)] p-4" aria-label="Regalo incluido">
+        <p className="text-[12px] font-semibold uppercase tracking-wider text-[var(--accent)]">Incluye regalo</p>
+        <ul className="mt-2 space-y-1 text-[14px] text-[var(--text-secondary)]">
+          {(product.product_gifts ?? []).map((gift) => { const giftProduct = Array.isArray(gift.gift_product) ? gift.gift_product[0] : gift.gift_product; return giftProduct ? <li key={gift.gift_product_id}>+ {gift.quantity} × {giftProduct.brand} {giftProduct.model}</li> : null; })}
+        </ul>
+      </section>}
+
       <Link href="/catalogo" className="btn-secondary w-full justify-center text-center mb-20 sm:mb-3" id="back-to-catalog">
         ← Volver al catálogo
       </Link>

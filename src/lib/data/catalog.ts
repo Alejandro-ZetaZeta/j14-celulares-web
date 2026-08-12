@@ -28,9 +28,10 @@ export async function getProducts(): Promise<ProductWithVariants[]> {
     .from("products")
     .select(`
       id, brand, model, type, image_url, image_key, allows_installments, is_featured, featured_order, featured_eyebrow, featured_headline, featured_description, featured_cta, created_at,
-      product_variants (
-        id, product_id, capacity, color, price, stock, battery_condition, created_at
-      )
+       product_variants (
+         id, product_id, capacity, color, price, stock, battery_condition, created_at
+       ),
+       product_gifts!product_gifts_product_id_fkey (product_id, gift_product_id, quantity, gift_product:products!product_gifts_gift_product_id_fkey(id, brand, model, type, image_url, product_variants(id, product_id, capacity, color, price, stock, battery_condition, created_at)))
     `)
     .order("created_at", { ascending: false });
 
@@ -40,7 +41,7 @@ export async function getProducts(): Promise<ProductWithVariants[]> {
   }
 
   // Filter out products with zero total stock (extra safety layer)
-  return (data as ProductWithVariants[]).filter(
+  return (data as unknown as ProductWithVariants[]).filter(
     (p) =>
       p.product_variants &&
       p.product_variants.some((v) => v.stock > 0)
@@ -62,9 +63,10 @@ export async function getProductById(
     .from("products")
     .select(`
       id, brand, model, type, image_url, image_key, allows_installments, is_featured, featured_order, featured_eyebrow, featured_headline, featured_description, featured_cta, created_at,
-      product_variants (
-        id, product_id, capacity, color, price, stock, battery_condition, created_at
-      )
+       product_variants (
+         id, product_id, capacity, color, price, stock, battery_condition, created_at
+       ),
+       product_gifts!product_gifts_product_id_fkey (product_id, gift_product_id, quantity, gift_product:products!product_gifts_gift_product_id_fkey(id, brand, model, type, image_url, product_variants(id, product_id, capacity, color, price, stock, battery_condition, created_at)))
     `)
     .eq("id", id)
     .single();
@@ -74,7 +76,7 @@ export async function getProductById(
     return null;
   }
 
-  return data as ProductWithVariants;
+  return data as unknown as ProductWithVariants;
 }
 
 /**

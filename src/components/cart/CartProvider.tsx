@@ -17,6 +17,11 @@ interface CartContextValue {
   clearCart: () => void;
   openCart: () => void;
   closeCart: () => void;
+  promotionCode: string;
+  promotionError: string;
+  applyingPromotion: boolean;
+  applyPromotion: (code: string) => Promise<void>;
+  removePromotion: () => void;
 }
 
 type Action =
@@ -61,6 +66,10 @@ export default function CartProvider({ children, initialTaxRate = 15 }: { childr
   const [items, dispatch] = useReducer(reducer, []);
   const [open, setOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [promotionCode, setPromotionCode] = useState("");
+  const [promotionDiscount, setPromotionDiscount] = useState(0);
+  const [promotionError, setPromotionError] = useState("");
+  const [applyingPromotion, setApplyingPromotion] = useState(false);
 
   useEffect(() => {
     try {
@@ -82,7 +91,7 @@ export default function CartProvider({ children, initialTaxRate = 15 }: { childr
 
   const value = useMemo<CartContextValue>(() => ({
     items,
-    totals: computeCartTotals(items, initialTaxRate / 100),
+    totals: computeCartTotals(items, initialTaxRate / 100, promotionDiscount, promotionCode || null),
     ivaRate: initialTaxRate,
     itemCount: items.reduce((sum, item) => sum + item.quantity, 0),
     open,
@@ -92,7 +101,26 @@ export default function CartProvider({ children, initialTaxRate = 15 }: { childr
     clearCart: () => dispatch({ type: "clear" }),
     openCart: () => setOpen(true),
     closeCart: () => setOpen(false),
-  }), [items, open, initialTaxRate]);
+    promotionCode,
+    promotionError,
+    applyingPromotion,
+    applyPromotion: async (code) => {
+      setApplyingPromotion(true);
+      setPromotionError("");
+      try {
+        const response = await fetch("/api/promotions/validate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code, items: items.map(({ variantId, quantity }) => ({ variantId, quantity })) }) });
+        const result = await response.json() as { discount?: number; code?: string; error?: string };
+        if (!response.ok || !result.code) throw new Error(result.error ?? "Código inválido.");
+        setPromotionCode(result.code);
+        setPromotionDiscount(Number(result.discount ?? 0));
+      } catch (error) {
+        setPromotionCode("");
+        setPromotionDiscount(0);
+        setPromotionError(error instanceof Error ? error.message : "Código inválido.");
+      } finally { setApplyingPromotion(false); }
+    },
+    removePromotion: () => { setPromotionCode(""); setPromotionDiscount(0); setPromotionError(""); },
+  }), [items, open, initialTaxRate, promotionDiscount, promotionCode, promotionError, applyingPromotion]);
 
   return <CartContext.Provider value={value}>{children}<CartDrawer /></CartContext.Provider>;
 }

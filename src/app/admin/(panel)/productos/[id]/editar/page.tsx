@@ -2,6 +2,8 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/auth/roles";
 import { getProductForAdmin } from "@/lib/actions/admin-products";
+import { getAllProducts } from "@/lib/actions/admin-products";
+import { getProductGifts } from "@/lib/actions/admin-promotions";
 import EditarProductoClient from "./EditarProductoClient";
 import AdminPanelSkeleton from "../../../AdminPanelSkeleton";
 
@@ -15,7 +17,8 @@ async function EditarProductoContent({ params }: PageProps) {
   const product = await getProductForAdmin(id);
   if (!product) notFound();
 
-  return <EditarProductoClient product={product} />;
+  const [productOptions, gifts] = await Promise.all([getAllProducts(), getProductGifts(id)]);
+  return <EditarProductoClient product={product} productOptions={productOptions as never} initialGiftIds={gifts.map((gift) => gift.gift_product_id)} />;
 }
 
 export default function EditarProductoPage({ params }: PageProps) {

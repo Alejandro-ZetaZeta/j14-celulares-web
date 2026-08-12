@@ -9,6 +9,8 @@ export interface CartItem {
   imageUrl: string | null;
   quantity: number;
   stock: number;
+  isGift?: boolean;
+  giftForProductId?: string;
 }
 
 export interface CartTotals {
@@ -16,4 +18,6 @@ export interface CartTotals {
   subtotalBase15: number;
   ivaAmount: number;
   total: number;
+  discount: number;
+  promotionCode: string | null;
 }

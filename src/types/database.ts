@@ -6,6 +6,7 @@ export type ProductType = 'android' | 'sealed_iphone' | 'open_box_iphone';
 export type ServiceStatus = 'received' | 'under_diagnosis' | 'ready_for_delivery';
 export type AppRole = 'admin' | 'technician' | 'client';
 export type OrderStatus = 'PENDING' | 'APPROVED' | 'DISPATCHED' | 'DELIVERED' | 'REJECTED' | 'CANCELLED';
+export type PromotionType = 'percentage' | 'fixed' | 'gift';
 
 export interface Product {
   id: string;
@@ -113,6 +114,31 @@ export interface TicketMessage {
 
 export interface ProductWithVariants extends Product {
   product_variants: ProductVariant[];
+  product_gifts?: ProductGift[];
+}
+
+export interface ProductGift {
+  product_id: string;
+  gift_product_id: string;
+  quantity: number;
+  gift_product?: ProductWithVariants | ProductWithVariants[];
+}
+
+export interface Promotion {
+  id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  promotion_type: PromotionType;
+  discount_value: number;
+  min_subtotal: number;
+  starts_at: string | null;
+  ends_at: string | null;
+  max_uses: number | null;
+  used_count: number;
+  active: boolean;
+  created_at: string;
+  promotion_products?: { product_id: string }[];
 }
 
 export interface VariantWithSerials extends ProductVariant {
@@ -138,6 +164,8 @@ export interface Order {
   subtotal_base_15: number;
   iva_amount: number;
   total_amount: number;
+  discount_amount: number;
+  promotion_code: string | null;
   status: OrderStatus;
   payment_method: string;
   tracking_number: string | null;
@@ -157,6 +185,8 @@ export interface OrderItem {
   quantity: number;
   unit_price: number;
   subtotal: number;
+  is_gift?: boolean;
+  promotion_id?: string | null;
 }
 
 export interface AdminOrder extends Order {

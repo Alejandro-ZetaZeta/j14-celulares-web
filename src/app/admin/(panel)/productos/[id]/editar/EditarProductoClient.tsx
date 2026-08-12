@@ -8,6 +8,7 @@ import {
   updateVariant,
   deleteVariant,
 } from "@/lib/actions/admin-products";
+import { setProductGifts } from "@/lib/actions/admin-promotions";
 import {
   uploadProductImage,
   deleteProductImage,
@@ -47,8 +48,12 @@ function newVariantRow(): VariantRow {
 
 export default function EditarProductoClient({
   product,
+  productOptions,
+  initialGiftIds,
 }: {
   product: ProductWithVariants;
+  productOptions: ProductWithVariants[];
+  initialGiftIds: string[];
 }) {
   const router = useRouter();
   const [brand, setBrand] = useState(product.brand);
@@ -71,6 +76,9 @@ export default function EditarProductoClient({
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [giftsEnabled, setGiftsEnabled] = useState(initialGiftIds.length > 0);
+  const [giftProductId, setGiftProductId] = useState(initialGiftIds[0] ?? "");
+  const [giftSearch, setGiftSearch] = useState("");
 
   const isOpenBox = type === "open_box_iphone";
 
@@ -140,6 +148,7 @@ export default function EditarProductoClient({
       for (const v of deleted) {
         if (v.id) await deleteVariant(v.id);
       }
+      await setProductGifts(product.id, giftsEnabled && giftProductId ? [{ gift_product_id: giftProductId, quantity: 1 }] : []);
 
       // Image lifecycle: replace > remove > keep
       if (pendingFile) {
@@ -297,6 +306,11 @@ export default function EditarProductoClient({
               </p>
             )}
           </div>
+        </section>
+
+        <section className="card-apple p-6 hover:!transform-none flex flex-col gap-4">
+          <label className="flex items-center gap-3 text-[14px] font-medium"><input type="checkbox" checked={giftsEnabled} onChange={(event) => setGiftsEnabled(event.target.checked)} className="h-5 w-5 accent-[var(--accent)]" /> Este producto incluye un regalo</label>
+          {giftsEnabled && <div className="flex flex-col gap-2"><p className="text-[12px] text-[var(--text-tertiary)]">Busca un producto existente con stock disponible.</p><input value={giftSearch} onChange={(event) => setGiftSearch(event.target.value)} placeholder="Buscar producto regalo..." className="input-apple" /><select required value={giftProductId} onChange={(event) => setGiftProductId(event.target.value)} className="input-apple"><option value="">Selecciona un producto</option>{productOptions.filter((option) => option.id !== product.id && `${option.brand} ${option.model}`.toLowerCase().includes(giftSearch.toLowerCase()) && (option.product_variants ?? []).some((variant) => variant.stock > 0)).map((option) => <option key={option.id} value={option.id}>{option.brand} {option.model}</option>)}</select></div>}
         </section>
 
         <section className="card-apple p-6 hover:!transform-none flex flex-col gap-4">

@@ -4,10 +4,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { formatCurrency } from "@/lib/cart";
+import { useState } from "react";
 import { useCart } from "@/components/cart/CartProvider";
 
 export default function CartDrawer() {
-  const { open, closeCart, items, totals, ivaRate, removeFromCart, updateQuantity } = useCart();
+  const { open, closeCart, items, totals, ivaRate, removeFromCart, updateQuantity, promotionCode, promotionError, applyingPromotion, applyPromotion, removePromotion } = useCart();
+  const [code, setCode] = useState("");
 
   return <AnimatePresence>{open && <>
     <motion.button key="cart-backdrop" type="button" aria-label="Cerrar carrito" className="fixed inset-0 z-40 cursor-default bg-black/35 backdrop-blur-[2px]" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeCart} />
@@ -24,7 +26,7 @@ export default function CartDrawer() {
           </article>)}
         </div>}
       </div>
-      {items.length > 0 && <footer className="border-t border-[var(--border)] bg-[var(--surface)] p-5"><div className="space-y-2 text-[13px]"><div className="flex justify-between text-[var(--text-secondary)]"><span>Base IVA {ivaRate}%</span><span>{formatCurrency(totals.subtotalBase15)}</span></div><div className="flex justify-between text-[var(--text-secondary)]"><span>IVA {ivaRate}%</span><span>{formatCurrency(totals.ivaAmount)}</span></div><div className="mt-3 flex justify-between border-t border-[var(--border)] pt-3 text-[18px] font-bold"><span>Total</span><span>{formatCurrency(totals.total)}</span></div></div><Link href="/checkout" onClick={closeCart} className="btn-primary mt-5 flex w-full justify-center">Proceder al Pago con PagoPlux</Link></footer>}
+      {items.length > 0 && <footer className="border-t border-[var(--border)] bg-[var(--surface)] p-5"><div className="mb-4 flex gap-2"><input value={promotionCode || code} disabled={Boolean(promotionCode)} onChange={(event) => setCode(event.target.value.toUpperCase())} placeholder="Código promocional" className="input-apple min-w-0 flex-1" /><button type="button" disabled={applyingPromotion || Boolean(promotionCode)} onClick={() => void applyPromotion(code)} className="btn-secondary shrink-0 disabled:opacity-50">{applyingPromotion ? "..." : "Aplicar"}</button></div>{promotionError && <p className="mb-3 text-[12px] text-[var(--status-red)]">{promotionError}</p>}{promotionCode && <button type="button" onClick={removePromotion} className="mb-3 text-[12px] text-[var(--accent)] hover:underline">Quitar promoción</button>}<div className="space-y-2 text-[13px]"><div className="flex justify-between text-[var(--text-secondary)]"><span>Base IVA {ivaRate}%</span><span>{formatCurrency(totals.subtotalBase15)}</span></div>{totals.discount > 0 && <div className="flex justify-between text-[var(--status-green)]"><span>Descuento</span><span>-{formatCurrency(totals.discount)}</span></div>}<div className="flex justify-between text-[var(--text-secondary)]"><span>IVA {ivaRate}%</span><span>{formatCurrency(totals.ivaAmount)}</span></div><div className="mt-3 flex justify-between border-t border-[var(--border)] pt-3 text-[18px] font-bold"><span>Total</span><span>{formatCurrency(totals.total)}</span></div></div><Link href="/checkout" onClick={closeCart} className="btn-primary mt-5 flex w-full justify-center">Proceder al Pago con PagoPlux</Link></footer>}
     </motion.aside>
   </>}</AnimatePresence>;
 }

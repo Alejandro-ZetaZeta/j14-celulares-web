@@ -11,7 +11,7 @@ export async function getAllProducts() {
   const db = await getAdminDatabase();
   const { data, error } = await db
     .from("products")
-    .select(`id, brand, model, type, image_url, allows_installments, is_featured, featured_order, featured_eyebrow, featured_headline, featured_description, featured_cta, created_at, product_variants(id, capacity, color, price, stock, battery_condition)`)
+    .select(`id, brand, model, type, image_url, image_key, allows_installments, is_featured, featured_order, featured_eyebrow, featured_headline, featured_description, featured_cta, created_at, product_variants(id, capacity, color, price, stock, battery_condition)`)
     .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
   return data;

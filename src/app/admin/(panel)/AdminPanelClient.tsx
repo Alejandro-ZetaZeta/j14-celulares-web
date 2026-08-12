@@ -11,6 +11,7 @@ const allSidebarLinks = [
   { href: "/admin", label: "Dashboard", icon: "📊", exact: true, roles: ["admin"] as AppRole[] },
   { href: "/admin/productos", label: "Productos", icon: "📦", roles: ["admin"] as AppRole[] },
   { href: "/admin/colecciones", label: "Colecciones", icon: "◌", roles: ["admin"] as AppRole[] },
+  { href: "/admin/promociones", label: "Promociones", icon: "%", roles: ["admin"] as AppRole[] },
   { href: "/admin/financiamiento", label: "Financiamiento", icon: "💳", roles: ["admin"] as AppRole[] },
   { href: "/admin/configuracion", label: "Configuración", icon: "⚙️", roles: ["admin"] as AppRole[] },
   { href: "/admin/ventas", label: "Ventas", icon: "🧾", roles: ["admin"] as AppRole[] },
