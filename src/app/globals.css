@@ -103,24 +103,13 @@ body {
   line-height: 1.05;
 }
 
-/* Progressive enhancement for admin-controlled display headlines. The
-   percentage caps Chromium's growth while unsupported browsers keep the
-   existing responsive type scale. */
+/* Responsive headline helper — text-wrap + overflow-wrap as the safe
+   cross-browser baseline. text-fit (CSS Text Level 4) is still experimental
+   and not yet in any stable browser, so we skip the @supports block to
+   avoid linter warnings. Re-add when the spec ships broadly. */
 .text-fit-grow {
   text-wrap: balance;
   overflow-wrap: anywhere;
-}
-
-@supports (text-fit: grow) {
-  .text-fit-grow {
-    text-fit: grow;
-  }
-}
-
-@supports (text-fit: grow consistent 115%) {
-  .text-fit-grow {
-    text-fit: grow consistent 115%;
-  }
 }
 
 .text-display {
