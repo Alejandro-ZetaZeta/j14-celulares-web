@@ -7,11 +7,14 @@ export function roundCents(value: number): number {
 }
 
 export function computeCartTotals(items: CartItem[], ivaRate = IVA_RATE): CartTotals {
-  const subtotalBase15 = roundCents(
+  // unitPrice is the catalog price (IVA-inclusive). We back-calculate the pre-tax base.
+  const totalWithIva = roundCents(
     items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
   );
+  const subtotalBase15 = roundCents(totalWithIva / (1 + ivaRate));
   const ivaAmount = roundCents(subtotalBase15 * ivaRate);
-  const total = roundCents(subtotalBase15 + ivaAmount);
+  // Use totalWithIva as the total so it matches the catalog price exactly.
+  const total = totalWithIva;
 
   return { subtotalBase0: 0, subtotalBase15, ivaAmount, total };
 }
