@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   updateProduct,
@@ -10,16 +10,12 @@ import {
 } from "@/lib/actions/admin-products";
 import { setProductGifts } from "@/lib/actions/admin-promotions";
 import {
-  uploadProductImage,
-  deleteProductImage,
+  deleteProductImageById,
+  uploadProductImages,
+  reorderProductImages,
 } from "@/lib/actions/admin-product-images";
 import type { ProductWithVariants } from "@/types/database";
-
-const PRODUCT_TYPES = [
-  { value: "android", label: "Android" },
-  { value: "sealed_iphone", label: "iPhone Sellado" },
-  { value: "open_box_iphone", label: "iPhone Open Box" },
-];
+import ImageUploadZone, { type ExistingImage } from "@/components/admin/ImageUploadZone";
 
 type VariantRow = {
   id?: string;
@@ -66,11 +62,11 @@ export default function EditarProductoClient({
   const [featuredHeadline, setFeaturedHeadline] = useState(product.featured_headline ?? "");
   const [featuredDescription, setFeaturedDescription] = useState(product.featured_description ?? "");
   const [featuredCta, setFeaturedCta] = useState(product.featured_cta ?? "");
-  const currentImageUrl = product.image_url ?? "";
-  const currentImageKey = product.image_key ?? null;
-  const [imageRemoved, setImageRemoved] = useState(false);
-  const [pendingFile, setPendingFile] = useState<File | null>(null);
-  const [pendingPreview, setPendingPreview] = useState<string | null>(null);
+  const [imageOrder, setImageOrder] = useState<string[]>(
+    (product.product_images ?? []).sort((a, b) => a.display_order - b.display_order).map((img) => img.id)
+  );
+  const [removedImageIds, setRemovedImageIds] = useState<Set<string>>(new Set());
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [variants, setVariants] = useState<VariantRow[]>(
     product.product_variants.map(variantFromExisting)
   );
@@ -115,6 +111,24 @@ export default function EditarProductoClient({
     });
   }
 
+  // Build existing images list for ImageUploadZone (sorted, excluding removed)
+  const existingImagesForZone: ExistingImage[] = imageOrder
+    .filter((id) => !removedImageIds.has(id))
+    .flatMap((id) => {
+      const img = product.product_images?.find((i) => i.id === id);
+      return img ? [{ id, url: img.image_url }] : [];
+    });
+
+  const handleReorderExisting = useCallback((ids: string[]) => {
+    // ids = new order of visible saved images; re-insert removed ones won't happen
+    setImageOrder(ids);
+  }, []);
+
+  const handleRemoveExisting = useCallback((id: string) => {
+    setRemovedImageIds((prev) => new Set([...prev, id]));
+    setImageOrder((prev) => prev.filter((i) => i !== id));
+  }, []);
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (saving) return;
@@ -149,12 +163,16 @@ export default function EditarProductoClient({
         if (v.id) await deleteVariant(v.id);
       }
       await setProductGifts(product.id, giftsEnabled && giftProductId ? [{ gift_product_id: giftProductId, quantity: 1 }] : []);
+      await reorderProductImages(product.id, imageOrder);
 
-      // Image lifecycle: replace > remove > keep
-      if (pendingFile) {
-        await uploadProductImage(product.id, pendingFile);
-      } else if (imageRemoved && currentImageKey) {
-        await deleteProductImage(product.id);
+      // Delete any saved images the user removed
+      for (const id of removedImageIds) {
+        await deleteProductImageById(product.id, id);
+      }
+
+      // Upload new pending files (appended after saved images)
+      if (pendingFiles.length) {
+        await uploadProductImages(product.id, pendingFiles);
       }
 
       router.push("/admin/productos");
@@ -166,18 +184,7 @@ export default function EditarProductoClient({
     }
   }
 
-  function handlePickFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0] ?? null;
-    setPendingFile(file);
-    setPendingPreview(file ? URL.createObjectURL(file) : null);
-    setImageRemoved(false);
-  }
 
-  function handleRemoveImage() {
-    setImageRemoved(true);
-    setPendingFile(null);
-    setPendingPreview(null);
-  }
 
   const activeVariants = variants.map((v, i) => ({ v, i })).filter(({ v }) => !v._deleted);
   const deletedVariants = variants.map((v, i) => ({ v, i })).filter(({ v }) => v._deleted);
@@ -228,17 +235,15 @@ export default function EditarProductoClient({
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="product-type" className="text-[14px] font-medium">Tipo</label>
-            <select
-              id="product-type"
-              value={type}
-              onChange={(e) => setType(e.target.value as typeof type)}
-              className="px-4 py-2.5 rounded-[var(--radius-md)] border border-[var(--border-strong)] bg-[var(--surface)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] text-[15px]"
-            >
-              {PRODUCT_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>{t.label}</option>
-              ))}
-            </select>
+             <label htmlFor="product-type" className="text-[14px] font-medium">Tipo o categoría</label>
+             <input
+               id="product-type"
+               value={type}
+               onChange={(e) => setType(e.target.value)}
+               placeholder="Celular, cargador, cable, funda..."
+               required
+               className="px-4 py-2.5 rounded-[var(--radius-md)] border border-[var(--border-strong)] bg-[var(--surface)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] text-[15px]"
+             />
           </div>
 
           <label className="flex items-center gap-3 p-3 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg-secondary)] cursor-pointer">
@@ -258,53 +263,15 @@ export default function EditarProductoClient({
           {isFeatured && <div className="featured-copy-fields grid gap-3 border-l-2 border-[var(--accent)] pl-4"><p className="text-[12px] font-semibold uppercase tracking-wider text-[var(--accent)]">Mensaje de portada</p><label className="flex flex-col gap-1 text-[12px] font-medium">Frase superior<input value={featuredEyebrow} onChange={(e) => setFeaturedEyebrow(e.target.value)} placeholder="Ej. Rendimiento sin concesiones" className="rounded-[var(--radius-sm)] border border-[var(--border-strong)] px-3 py-2 text-[14px]" /></label><label className="flex flex-col gap-1 text-[12px] font-medium">Titular<input value={featuredHeadline} onChange={(e) => setFeaturedHeadline(e.target.value)} placeholder="Titular personalizado (opcional)" className="rounded-[var(--radius-sm)] border border-[var(--border-strong)] px-3 py-2 text-[14px]" /></label><label className="flex flex-col gap-1 text-[12px] font-medium">Descripción<textarea value={featuredDescription} onChange={(e) => setFeaturedDescription(e.target.value)} rows={3} placeholder="Describe por qué este equipo merece atención." className="rounded-[var(--radius-sm)] border border-[var(--border-strong)] px-3 py-2 text-[14px]" /></label><label className="flex flex-col gap-1 text-[12px] font-medium">Texto del botón<input value={featuredCta} onChange={(e) => setFeaturedCta(e.target.value)} placeholder="Texto del botón (ej. Ver equipo)" className="rounded-[var(--radius-sm)] border border-[var(--border-strong)] px-3 py-2 text-[14px]" /></label></div>}
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-[14px] font-medium">Imagen</label>
-
-            {currentImageUrl && !imageRemoved && !pendingFile && (
-              <div className="flex items-center gap-3">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={currentImageUrl}
-                  alt={`${brand} ${model}`}
-                  className="w-20 h-20 object-contain rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg-secondary)]"
-                />
-                <button
-                  type="button"
-                  onClick={handleRemoveImage}
-                  className="text-[12px] text-[var(--status-red)] hover:underline font-medium"
-                >
-                  Quitar imagen
-                </button>
-              </div>
-            )}
-
-            {imageRemoved && !pendingFile && (
-              <p className="text-[13px] text-[var(--text-tertiary)] italic">
-                La imagen se eliminará al guardar.
-              </p>
-            )}
-
-            <input
-              id="image-file"
-              type="file"
-              accept="image/jpeg,image/png"
-              onChange={handlePickFile}
-              className="text-[14px] file:mr-3 file:px-3 file:py-1.5 file:rounded-[var(--radius-sm)] file:border file:border-[var(--border-strong)] file:bg-[var(--surface)] file:text-[var(--text-primary)] file:cursor-pointer"
+            <label className="text-[14px] font-medium">Fotos del producto</label>
+            <ImageUploadZone
+              files={pendingFiles}
+              onChange={setPendingFiles}
+              existingImages={existingImagesForZone}
+              onReorderExisting={handleReorderExisting}
+              onRemoveExisting={handleRemoveExisting}
+              disabled={saving}
             />
-
-            {pendingPreview && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={pendingPreview}
-                alt="Vista previa"
-                className="mt-2 max-h-40 rounded-[var(--radius-md)] border border-[var(--border)] object-contain bg-[var(--bg-secondary)]"
-              />
-            )}
-            {pendingFile && (
-              <p className="text-[12px] text-[var(--text-tertiary)]">
-                Reemplaza la imagen actual al guardar.
-              </p>
-            )}
           </div>
         </section>
 

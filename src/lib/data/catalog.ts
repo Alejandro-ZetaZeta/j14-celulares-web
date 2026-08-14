@@ -28,12 +28,13 @@ export async function getProducts(): Promise<ProductWithVariants[]> {
     .from("products")
     .select(`
       id, brand, model, type, image_url, image_key, allows_installments, is_featured, featured_order, featured_eyebrow, featured_headline, featured_description, featured_cta, created_at,
+       product_images (id, product_id, image_url, image_key, display_order, created_at),
        product_variants (
          id, product_id, capacity, color, price, stock, battery_condition, created_at
        ),
        product_gifts!product_gifts_product_id_fkey (product_id, gift_product_id, quantity, gift_product:products!product_gifts_gift_product_id_fkey(id, brand, model, type, image_url, product_variants(id, product_id, capacity, color, price, stock, battery_condition, created_at)))
     `)
-    .order("created_at", { ascending: false });
+     .order("created_at", { ascending: false });
 
   if (error) {
     console.error("[getProducts] Error:", error.message);
@@ -45,7 +46,10 @@ export async function getProducts(): Promise<ProductWithVariants[]> {
     (p) =>
       p.product_variants &&
       p.product_variants.some((v) => v.stock > 0)
-  );
+  ).map((p) => ({
+    ...p,
+    product_images: (p.product_images ?? []).sort((a, b) => a.display_order - b.display_order),
+  }));
 }
 
 /**
@@ -63,6 +67,7 @@ export async function getProductById(
     .from("products")
     .select(`
       id, brand, model, type, image_url, image_key, allows_installments, is_featured, featured_order, featured_eyebrow, featured_headline, featured_description, featured_cta, created_at,
+       product_images (id, product_id, image_url, image_key, display_order, created_at),
        product_variants (
          id, product_id, capacity, color, price, stock, battery_condition, created_at
        ),
@@ -76,7 +81,11 @@ export async function getProductById(
     return null;
   }
 
-  return data as unknown as ProductWithVariants;
+  const product = data as unknown as ProductWithVariants;
+  return {
+    ...product,
+    product_images: (product.product_images ?? []).sort((a, b) => a.display_order - b.display_order),
+  };
 }
 
 /**

@@ -5,13 +5,8 @@ import { useRouter } from "next/navigation";
 import { createProduct, createVariant } from "@/lib/actions/admin-products";
 import { setProductGifts } from "@/lib/actions/admin-promotions";
 import type { ProductWithVariants } from "@/types/database";
-import { uploadProductImage } from "@/lib/actions/admin-product-images";
-
-const PRODUCT_TYPES = [
-  { value: "android", label: "Android" },
-  { value: "sealed_iphone", label: "iPhone Sellado" },
-  { value: "open_box_iphone", label: "iPhone Open Box" },
-];
+import { uploadProductImages } from "@/lib/actions/admin-product-images";
+import ImageUploadZone from "@/components/admin/ImageUploadZone";
 
 interface VariantRow {
   capacity: string;
@@ -30,8 +25,7 @@ export default function NuevoProductoClient({ productOptions }: { productOptions
   const [productType, setProductType] = useState("android");
   const [isFeatured, setIsFeatured] = useState(false);
   const [variants, setVariants] = useState<VariantRow[]>([emptyVariant()]);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [giftsEnabled, setGiftsEnabled] = useState(false);
@@ -48,11 +42,7 @@ export default function NuevoProductoClient({ productOptions }: { productOptions
     });
   }
 
-  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0] ?? null;
-    setImageFile(file);
-    setImagePreview(file ? URL.createObjectURL(file) : null);
-  }
+
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -68,9 +58,7 @@ export default function NuevoProductoClient({ productOptions }: { productOptions
       const product = await createProduct(formData);
 
       // Upload image (if provided) — uses the new product id in the storage key
-      if (imageFile) {
-        await uploadProductImage(product.id, imageFile);
-      }
+      if (imageFiles.length) await uploadProductImages(product.id, imageFiles);
 
       // Create each variant
       await Promise.all(
@@ -126,17 +114,16 @@ export default function NuevoProductoClient({ productOptions }: { productOptions
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="product-type" className="text-[14px] font-medium">Tipo</label>
-            <select
-              id="product-type"
-              value={productType}
-              onChange={(e) => setProductType(e.target.value)}
-              className="px-4 py-2.5 rounded-[var(--radius-md)] border border-[var(--border-strong)] bg-[var(--surface)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] text-[15px]"
-            >
-              {PRODUCT_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>{t.label}</option>
-              ))}
-            </select>
+             <label htmlFor="product-type" className="text-[14px] font-medium">Tipo o categoría</label>
+             <input
+               id="product-type"
+               name="type"
+               value={productType}
+               onChange={(e) => setProductType(e.target.value)}
+               placeholder="Celular, cargador, cable, funda..."
+               required
+               className="px-4 py-2.5 rounded-[var(--radius-md)] border border-[var(--border-strong)] bg-[var(--surface)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] text-[15px]"
+             />
           </div>
 
           <label className="flex items-center gap-3 p-3 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg-secondary)] cursor-pointer">
@@ -165,23 +152,12 @@ export default function NuevoProductoClient({ productOptions }: { productOptions
           </div>}
 
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="product-image" className="text-[14px] font-medium">Imagen (opcional)</label>
-            <input
-              id="product-image"
-              name="image"
-              type="file"
-              accept="image/jpeg,image/png"
-              onChange={handleImageChange}
-              className="text-[14px] file:mr-3 file:px-3 file:py-1.5 file:rounded-[var(--radius-sm)] file:border file:border-[var(--border-strong)] file:bg-[var(--surface)] file:text-[var(--text-primary)] file:cursor-pointer"
+            <label className="text-[14px] font-medium">Fotos (opcional)</label>
+            <ImageUploadZone
+              files={imageFiles}
+              onChange={setImageFiles}
+              disabled={saving}
             />
-            {imagePreview && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={imagePreview}
-                alt="Vista previa"
-                className="mt-2 max-h-40 rounded-[var(--radius-md)] border border-[var(--border)] object-contain bg-[var(--bg-secondary)]"
-              />
-            )}
           </div>
         </section>
 

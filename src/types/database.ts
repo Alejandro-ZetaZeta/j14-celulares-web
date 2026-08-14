@@ -2,7 +2,7 @@
 // Database TypeScript Interfaces — Cell Phone Sales Platform
 // ============================================================
 
-export type ProductType = 'android' | 'sealed_iphone' | 'open_box_iphone';
+export type ProductType = string;
 export type ServiceStatus = 'received' | 'under_diagnosis' | 'ready_for_delivery';
 export type AppRole = 'admin' | 'technician' | 'client';
 export type OrderStatus = 'PENDING' | 'APPROVED' | 'DISPATCHED' | 'DELIVERED' | 'REJECTED' | 'CANCELLED';
@@ -22,6 +22,16 @@ export interface Product {
   featured_headline: string | null;
   featured_description: string | null;
   featured_cta: string | null;
+  created_at: string;
+  product_images?: ProductImage[];
+}
+
+export interface ProductImage {
+  id: string;
+  product_id: string;
+  image_url: string;
+  image_key: string;
+  display_order: number;
   created_at: string;
 }
 

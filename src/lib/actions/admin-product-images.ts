@@ -89,6 +89,63 @@ export async function uploadProductImage(
   return { image_url: productImageProxyUrl(key), image_key: key };
 }
 
+export async function uploadProductImages(productId: string, files: File[]) {
+  const db = await getAdminDatabase();
+  const { data: current } = await db.from("product_images").select("display_order").eq("product_id", productId).order("display_order", { ascending: false }).limit(1);
+  let order = Number(current?.[0]?.display_order ?? -1) + 1;
+  for (const file of files) {
+    const result = await uploadProductImage(productId, file);
+    await db.from("product_images").insert([{ product_id: productId, image_url: result.image_url, image_key: result.image_key, display_order: order++ }]);
+  }
+  updateTag("products");
+  updateTag(`product-${productId}`);
+}
+
+export async function reorderProductImages(productId: string, imageIds: string[]) {
+  const db = await getAdminDatabase();
+  await Promise.all(imageIds.map((id, index) => db.from("product_images").update({ display_order: index }).eq("id", id).eq("product_id", productId)));
+  updateTag("products");
+  updateTag(`product-${productId}`);
+}
+
+/**
+ * Delete a single row from the product_images table and its storage object.
+ */
+export async function deleteProductImageById(
+  productId: string,
+  imageId: string
+): Promise<void> {
+  const db = await getAdminDatabase();
+
+  const { data: row } = await db
+    .from("product_images")
+    .select("image_key")
+    .eq("id", imageId)
+    .eq("product_id", productId)
+    .single();
+
+  const key = (row as { image_key: string | null } | null)?.image_key ?? null;
+
+  const { error } = await db
+    .from("product_images")
+    .delete()
+    .eq("id", imageId)
+    .eq("product_id", productId);
+
+  if (error) throw new Error(`Error al eliminar imagen: ${error.message}`);
+
+  if (key) {
+    await insforgeAdmin.storage
+      .from(PRODUCT_IMAGES_BUCKET)
+      .remove(key)
+      .catch((err) => console.error("[deleteProductImageById] storage cleanup failed:", err));
+  }
+
+  updateTag("products");
+  updateTag(`product-${productId}`);
+  revalidatePath(`/admin/productos/${productId}/editar`);
+}
+
 /**
  * Remove the image from storage and clear the DB fields.
  * The product row is intentionally not touched (variant/product data is preserved).

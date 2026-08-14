@@ -694,6 +694,10 @@ select:focus-visible {
 ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
 
+/* Hide scrollbar visually while keeping scroll functionality */
+.scrollbar-hide { scrollbar-width: none; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+
 /* ── Selection ─────────────────────────────────────────────── */
 ::selection { background: var(--accent-light); color: var(--accent); }
 
