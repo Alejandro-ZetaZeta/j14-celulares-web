@@ -15,7 +15,7 @@
  *   disabled       – disable all interaction
  */
 
-import { useRef, useState, useCallback, useMemo, useEffect } from "react";
+import { useRef, useState, useCallback, useMemo } from "react";
 
 export interface ExistingImage {
   id: string;
@@ -45,6 +45,10 @@ interface SavedItem {
 
 type GridItem = PendingItem | SavedItem;
 
+// File object identity survives reorder. Cache prevents blob URL replacement
+// or revocation when controlled `files` array changes order.
+const previewUrlCache = new WeakMap<File, string>();
+
 export default function ImageUploadZone({
   files,
   onChange,
@@ -60,37 +64,17 @@ export default function ImageUploadZone({
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
 
-  // Build blob preview URLs synchronously so they're available on the same
-  // render that `files` changes (avoiding the empty-string flash from useEffect).
-  const prevFilesRef = useRef<File[]>([]);
-  const prevPreviewsRef = useRef<string[]>([]);
-
+  // Build stable blob preview URLs from file identity.
   const previews = useMemo(() => {
-    const prev = prevFilesRef.current;
-    const prevUrls = prevPreviewsRef.current;
-
-    // Revoke URLs for files that were removed
-    prev.forEach((f, i) => {
-      if (!files.includes(f) && prevUrls[i]) {
-        URL.revokeObjectURL(prevUrls[i]);
-      }
-    });
-
-    // Build new URL list — reuse existing URL if file object is the same reference
     const next = files.map((f) => {
-      const existing = prev.indexOf(f);
-      return existing !== -1 ? prevUrls[existing] : URL.createObjectURL(f);
+      const existing = previewUrlCache.get(f);
+      if (existing) return existing;
+      const url = URL.createObjectURL(f);
+      previewUrlCache.set(f, url);
+      return url;
     });
-
-    prevFilesRef.current = files;
-    prevPreviewsRef.current = next;
     return next;
   }, [files]);
-
-  // Cleanup all URLs when the component unmounts
-  useEffect(() => {
-    return () => { prevPreviewsRef.current.forEach((u) => URL.revokeObjectURL(u)); };
-  }, []);
 
   const grid: GridItem[] = [
     ...existingImages.map((img): SavedItem => ({ kind: "saved", id: img.id, url: img.url })),

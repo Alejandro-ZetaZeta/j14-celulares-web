@@ -21,19 +21,34 @@ export async function GET(
     return new NextResponse("Not found", { status: 404 });
   }
 
-  const { data: row, error: lookupError } = await insforgeAdmin
+  const { data: galleryRow, error: galleryLookupError } = await insforgeAdmin
     .database
-    .from("products")
+    .from("product_images")
     .select("id")
     .eq("image_key", key)
     .maybeSingle();
 
-  if (lookupError) {
-    console.error("[image proxy] lookup error:", lookupError.message);
+  if (galleryLookupError) {
+    console.error("[image proxy] gallery lookup error:", galleryLookupError.message);
     return new NextResponse("Internal error", { status: 500 });
   }
 
-  if (!row) {
+  let exists = Boolean(galleryRow);
+  if (!exists) {
+    const { data: productRow, error: productLookupError } = await insforgeAdmin
+      .database
+      .from("products")
+      .select("id")
+      .eq("image_key", key)
+      .maybeSingle();
+    if (productLookupError) {
+      console.error("[image proxy] product lookup error:", productLookupError.message);
+      return new NextResponse("Internal error", { status: 500 });
+    }
+    exists = Boolean(productRow);
+  }
+
+  if (!exists) {
     return new NextResponse("Not found", { status: 404 });
   }
 
