@@ -20,6 +20,30 @@ async function getProductImagesDatabase() {
   return insforgeAdmin.database;
 }
 
+async function syncProductPrimaryImage(productId: string, db: typeof insforgeAdmin.database) {
+  const { data: firstImage, error } = await db
+    .from("product_images")
+    .select("image_url, image_key")
+    .eq("product_id", productId)
+    .order("display_order", { ascending: true })
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(`Error al sincronizar imagen principal: ${error.message}`);
+
+  const { error: updateError } = await db
+    .from("products")
+    .update(firstImage ? { image_url: firstImage.image_url, image_key: firstImage.image_key } : { image_url: null, image_key: null })
+    .eq("id", productId);
+  if (updateError) throw new Error(`Error al sincronizar producto: ${updateError.message}`);
+
+  updateTag("products");
+  updateTag(`product-${productId}`);
+  revalidatePath("/");
+  revalidatePath("/catalogo");
+  revalidatePath(`/catalogo/${productId}`);
+}
+
 async function optimizeProductImage(file: File | Blob): Promise<Blob> {
   const input = Buffer.from(await file.arrayBuffer());
   const output = await sharp(input)
@@ -127,19 +151,18 @@ export async function uploadProductImages(productId: string, files: File[]) {
     }
     firstResult ??= result;
   }
-  if (firstResult) {
-    const { data: productRow } = await db.from("products").select("image_key").eq("id", productId).single();
-    if (!(productRow as { image_key: string | null } | null)?.image_key) {
-      await db.from("products").update(firstResult).eq("id", productId);
-    }
-  }
+  if (firstResult) await syncProductPrimaryImage(productId, db);
   updateTag("products");
   updateTag(`product-${productId}`);
 }
 
 export async function reorderProductImages(productId: string, imageIds: string[]) {
   const db = await getProductImagesDatabase();
-  await Promise.all(imageIds.map((id, index) => db.from("product_images").update({ display_order: index }).eq("id", id).eq("product_id", productId)));
+  for (const [index, id] of imageIds.entries()) {
+    const { error } = await db.from("product_images").update({ display_order: index }).eq("id", id).eq("product_id", productId);
+    if (error) throw new Error(`Error al reordenar imágenes: ${error.message}`);
+  }
+  await syncProductPrimaryImage(productId, db);
   updateTag("products");
   updateTag(`product-${productId}`);
 }
@@ -162,6 +185,15 @@ export async function deleteProductImageById(
 
   const key = (row as { image_key: string | null } | null)?.image_key ?? null;
 
+  if (key) {
+    const { error: storageError } = await insforgeAdmin.storage
+      .from(PRODUCT_IMAGES_BUCKET)
+      .remove(key);
+    if (storageError) {
+      throw new Error(`Error al eliminar imagen del almacenamiento: ${storageError.message}`);
+    }
+  }
+
   const { error } = await db
     .from("product_images")
     .delete()
@@ -170,12 +202,7 @@ export async function deleteProductImageById(
 
   if (error) throw new Error(`Error al eliminar imagen: ${error.message}`);
 
-  if (key) {
-    await insforgeAdmin.storage
-      .from(PRODUCT_IMAGES_BUCKET)
-      .remove(key)
-      .catch((err) => console.error("[deleteProductImageById] storage cleanup failed:", err));
-  }
+  await syncProductPrimaryImage(productId, db);
 
   updateTag("products");
   updateTag(`product-${productId}`);

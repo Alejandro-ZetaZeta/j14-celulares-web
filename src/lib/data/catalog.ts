@@ -32,7 +32,7 @@ export async function getProducts(): Promise<ProductWithVariants[]> {
        product_variants (
          id, product_id, capacity, color, price, stock, battery_condition, created_at
        ),
-       product_gifts!product_gifts_product_id_fkey (product_id, gift_product_id, quantity, gift_product:products!product_gifts_gift_product_id_fkey(id, brand, model, type, image_url, product_variants(id, product_id, capacity, color, price, stock, battery_condition, created_at)))
+       product_gifts!product_gifts_product_id_fkey (product_id, gift_product_id, quantity, gift_product:products!product_gifts_gift_product_id_fkey(id, brand, model, type, image_url, image_key, product_variants(id, product_id, capacity, color, price, stock, battery_condition, created_at)))
     `)
      .order("created_at", { ascending: false });
 
@@ -71,7 +71,7 @@ export async function getProductById(
        product_variants (
          id, product_id, capacity, color, price, stock, battery_condition, created_at
        ),
-       product_gifts!product_gifts_product_id_fkey (product_id, gift_product_id, quantity, gift_product:products!product_gifts_gift_product_id_fkey(id, brand, model, type, image_url, product_variants(id, product_id, capacity, color, price, stock, battery_condition, created_at)))
+       product_gifts!product_gifts_product_id_fkey (product_id, gift_product_id, quantity, gift_product:products!product_gifts_gift_product_id_fkey(id, brand, model, type, image_url, image_key, product_variants(id, product_id, capacity, color, price, stock, battery_condition, created_at)))
     `)
     .eq("id", id)
     .single();

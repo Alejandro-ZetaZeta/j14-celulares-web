@@ -63,6 +63,8 @@ export default function ImageUploadZone({
   // Drag-to-reorder state
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
+  const dragIndexRef = useRef<number | null>(null);
+  const overIndexRef = useRef<number | null>(null);
 
   // Build stable blob preview URLs from file identity.
   const previews = useMemo(() => {
@@ -123,15 +125,23 @@ export default function ImageUploadZone({
 
   // ── Drag-to-reorder (grid items) ─────────────────────────
   const handleItemDragStart = useCallback((index: number) => {
+    dragIndexRef.current = index;
+    overIndexRef.current = index;
     setDragIndex(index);
+    setOverIndex(index);
   }, []);
 
   const handleItemDragEnter = useCallback((index: number) => {
+    overIndexRef.current = index;
     setOverIndex(index);
   }, []);
 
   const handleItemDragEnd = useCallback(() => {
-    if (dragIndex === null || overIndex === null || dragIndex === overIndex) {
+    const from = dragIndexRef.current;
+    const to = overIndexRef.current;
+    if (from === null || to === null || from === to) {
+      dragIndexRef.current = null;
+      overIndexRef.current = null;
       setDragIndex(null);
       setOverIndex(null);
       return;
@@ -139,8 +149,8 @@ export default function ImageUploadZone({
 
     // Rebuild grid after reorder
     const reordered = [...grid];
-    const [moved] = reordered.splice(dragIndex, 1);
-    reordered.splice(overIndex, 0, moved);
+    const [moved] = reordered.splice(from, 1);
+    reordered.splice(to, 0, moved);
 
     const newSaved = reordered.filter((it): it is SavedItem => it.kind === "saved");
     const newPending = reordered.filter((it): it is PendingItem => it.kind === "pending");
@@ -151,9 +161,11 @@ export default function ImageUploadZone({
     }
     onChange(newPending.map((p) => p.file));
 
+    dragIndexRef.current = null;
+    overIndexRef.current = null;
     setDragIndex(null);
     setOverIndex(null);
-  }, [dragIndex, overIndex, grid, onChange, onReorderExisting]);
+  }, [grid, onChange, onReorderExisting]);
 
   const hasImages = grid.length > 0;
 
@@ -233,10 +245,13 @@ export default function ImageUploadZone({
                 <div
                   key={item.kind === "saved" ? item.id : `pending-${index}`}
                   draggable
-                  onDragStart={() => handleItemDragStart(index)}
-                  onDragEnter={() => handleItemDragEnter(index)}
-                  onDragEnd={handleItemDragEnd}
-                  onDragOver={(e) => e.preventDefault()}
+                   onDragStart={() => handleItemDragStart(index)}
+                   onDragEnter={() => handleItemDragEnter(index)}
+                   onDragEnd={handleItemDragEnd}
+                   onDragOver={(e) => {
+                     e.preventDefault();
+                     handleItemDragEnter(index);
+                   }}
                   className={[
                     "group relative aspect-square overflow-hidden rounded-[var(--radius-md)] border-2 bg-[var(--bg-secondary)] transition-all duration-150 cursor-grab active:cursor-grabbing",
                     isDragging ? "opacity-40 scale-95 border-[var(--accent)]" : "border-transparent",
