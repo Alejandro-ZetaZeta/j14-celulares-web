@@ -15,7 +15,7 @@ export interface PayboxData {
   PayboxDescription: string;
   PayboxRename: string;
   PayboxProduction: boolean;
-  PayboxEnvironment: "sandbox" | "prod";
+  PayboxEnvironment: "sandbox";
   PayboxLanguage: "es";
   PayboxClientName: string;
   PayboxClientIdentification: string;
@@ -30,9 +30,10 @@ export interface PayboxData {
   PayboxDescripcion?: string;
   PayboxClientIdentity?: string;
   PayboxButtonchester?: string;
-  PayboxIdElemento?: string;
+  PayboxIdElement?: string;
   PayboxOnSuccess: (data: unknown) => void;
   PayboxOnCancel: () => void;
+  PayboxPagoPlux?: boolean;
 }
 
 declare global {

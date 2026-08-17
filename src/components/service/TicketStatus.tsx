@@ -24,11 +24,17 @@ const STATUS_STEPS = [
     sublabel: "Equipo reparado y probado",
     icon: "✅",
   },
+  {
+    key: "delivered",
+    label: "Entregado",
+    sublabel: "Equipo retirado por el cliente",
+    icon: "📦",
+  },
 ];
 
-const STATUS_ORDER = ["received", "under_diagnosis", "ready_for_delivery"];
+const STATUS_ORDER = ["received", "under_diagnosis", "ready_for_delivery", "delivered"];
 const POLL_INTERVAL_MS = 30_000; // Poll every 30 seconds
-const TERMINAL_STATUS = "ready_for_delivery";
+const TERMINAL_STATUS = "delivered";
 
 interface TicketStatusProps {
   initialTicket: TechnicalService;
@@ -65,6 +71,7 @@ export default function TicketStatus({ initialTicket }: TicketStatusProps) {
 
   const currentIndex = STATUS_ORDER.indexOf(ticket.status);
   const isReady = ticket.status === "ready_for_delivery";
+  const isDelivered = ticket.status === "delivered";
   const isDiagnosis = ticket.status === "under_diagnosis";
 
   return (
@@ -78,7 +85,7 @@ export default function TicketStatus({ initialTicket }: TicketStatusProps) {
       aria-label={`Estado del ticket ${ticket.ticket_id}`}
     >
       {/* Header */}
-      <div className={`px-4 py-6 sm:px-8 ${isReady ? "bg-gradient-to-r from-[#34C759]/10 to-[#30D158]/5" : "section-gray"} border-b border-[var(--border)]`}>
+      <div className={`px-4 py-6 sm:px-8 ${isDelivered ? "bg-gradient-to-r from-[#8E8CF7]/10 to-[#6B69D6]/5" : isReady ? "bg-gradient-to-r from-[#34C759]/10 to-[#30D158]/5" : "section-gray"} border-b border-[var(--border)]`}>
         <div className="flex items-start justify-between flex-wrap gap-4">
           <div>
             <p className="text-[12px] font-semibold uppercase tracking-widest text-[var(--text-tertiary)] mb-1">
@@ -113,7 +120,7 @@ export default function TicketStatus({ initialTicket }: TicketStatusProps) {
                       backgroundColor: isCompleted
                         ? "#34C759"
                         : isCurrent
-                        ? "#0071E3"
+                        ? (isDelivered ? "#8E8CF7" : "#0071E3")
                         : "#E5E5EA",
                       scale: isCurrent ? 1.1 : 1,
                     }}
@@ -194,6 +201,19 @@ export default function TicketStatus({ initialTicket }: TicketStatusProps) {
                       </p>
                     </motion.div>
                   )}
+
+                  {/* Delivered confirmation */}
+                  {isCurrent && isDelivered && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="mt-3 bg-[#8E8CF7]/10 border border-[#8E8CF7]/30 rounded-[var(--radius-md)] px-4 py-3"
+                    >
+                      <p className="text-[14px] font-semibold text-[#6B69D6]">
+                        📦 ¡Equipo entregado! Gracias por confiar en nosotros.
+                      </p>
+                    </motion.div>
+                  )}
                 </div>
               </li>
             );
@@ -206,10 +226,14 @@ export default function TicketStatus({ initialTicket }: TicketStatusProps) {
         <p className="text-[12px] text-[var(--text-tertiary)]">
           Ingreso: {new Date(ticket.entry_date).toLocaleDateString("es-EC", { dateStyle: "medium" })}
         </p>
-        <div className="flex items-center gap-1.5 text-[12px] text-[var(--accent)]">
-          <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-pulse" aria-hidden="true" />
-          Actualizado {lastUpdated.toLocaleTimeString("es-EC", { hour: "2-digit", minute: "2-digit" })} · cada 30s
-        </div>
+        {isDelivered ? (
+          <p className="text-[12px] font-semibold text-[#8E8CF7]">✓ Ticket cerrado</p>
+        ) : (
+          <div className="flex items-center gap-1.5 text-[12px] text-[var(--accent)]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-pulse" aria-hidden="true" />
+            Actualizado {lastUpdated.toLocaleTimeString("es-EC", { hour: "2-digit", minute: "2-digit" })} · cada 30s
+          </div>
+        )}
       </div>
     </motion.div>
   );

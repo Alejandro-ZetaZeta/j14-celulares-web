@@ -3,10 +3,7 @@ import type { PayboxCustomer, PayboxData } from "@/types/pagoplux";
 
 const JQUERY_ID = "pagoplux-jquery";
 const JQUERY_SRC = "https://code.jquery.com/jquery-3.6.0.min.js";
-const IS_PRODUCTION = process.env.NEXT_PUBLIC_PAGOPLUX_IS_PRODUCTION === "true";
-const PAYBOX_HOST = IS_PRODUCTION
-  ? "https://paybox.pagoplux.com"
-  : "https://sandbox-paybox.pagoplux.com";
+const PAYBOX_HOST = "https://sandbox-paybox.pagoplux.com";
 const CSS_ID = "pagoplux-css";
 const CSS_SRC = `${PAYBOX_HOST}/css/Paybox.css`;
 const PAYBOX_ID = "pagoplux-paybox-script";
@@ -137,8 +134,12 @@ async function preloadPayboxInternal(): Promise<void> {
       PayboxName: process.env.NEXT_PUBLIC_PAGOPLUX_STORE_NAME || "PAGOPLUX",
       PayboxRemail: merchantEmail,
       PayboxLanguage: "es",
-      PayboxEnvironment: IS_PRODUCTION ? "prod" : "sandbox",
-      PayboxProduction: IS_PRODUCTION,
+      PayboxEnvironment: "sandbox",
+      PayboxProduction: false,
+      PayboxBase0: "0.00",
+      PayboxBase12: "0.00",
+      // false/omitted makes PagoPlux render its documented ButtonPaybox trigger.
+      PayboxPagoPlux: false,
       PayboxPagoInmediato: true,
     };
     window.onAuthorize = () => undefined;
@@ -154,8 +155,7 @@ async function preloadPayboxInternal(): Promise<void> {
       const started = Date.now();
       const check = window.setInterval(() => {
         const trigger = document.querySelector("#ButtonPaybox #pay, #ButtonPaybox a, #ButtonPaybox button");
-        const iframe = document.getElementById("iframePaybox");
-        if (trigger && iframe) {
+        if (trigger) {
           initialized = true;
           window.clearInterval(check);
           // PagoPlux binds #pay's click handler after its async environment load.
@@ -197,11 +197,6 @@ export async function openPaybox(
 
     loadCss(CSS_ID, CSS_SRC);
     injectPayboxStyles();
-    if (!window.__payboxPreloaded) {
-      document.getElementById("paybox_modal")?.remove();
-      document.getElementById("pay")?.remove();
-    }
-
     if (typeof window.jQuery === "undefined") {
       await loadScript(JQUERY_ID, JQUERY_SRC);
     }
@@ -238,13 +233,14 @@ export async function openPaybox(
       PayboxRuc: process.env.NEXT_PUBLIC_PAGOPLUX_RUC || "1790000000001",
       PayboxName: process.env.NEXT_PUBLIC_PAGOPLUX_STORE_NAME || "PAGOPLUX",
       PayboxBase0: totals.subtotalBase0.toFixed(2),
-      PayboxBase12: totals.subtotalBase15.toFixed(2),
+      // PagoPlux displays PayboxBase12 as amount to charge. Catalog prices include VAT.
+      PayboxBase12: totals.total.toFixed(2),
       PayboxIva: totals.ivaAmount.toFixed(2),
       PayboxMonto: totals.total.toFixed(2),
       PayboxDescription: "Compra en tienda web",
       PayboxRename: process.env.NEXT_PUBLIC_PAGOPLUX_STORE_NAME || "PAGOPLUX",
-      PayboxProduction: IS_PRODUCTION,
-      PayboxEnvironment: IS_PRODUCTION ? "prod" : "sandbox",
+      PayboxProduction: false,
+      PayboxEnvironment: "sandbox",
       PayboxLanguage: "es",
       PayboxClientName: customer.fullName.trim(),
       PayboxClientIdentification: cleanCedula,
@@ -255,7 +251,7 @@ export async function openPaybox(
       PayboxSendmail: customer.email.trim(),
       PayboxSendname: customer.fullName.trim(),
       PayboxIdPedido: orderId,
-      PayboxIdElemento: "ButtonPaybox",
+      PayboxIdElement: "ButtonPaybox",
       PayboxOnSuccess: handleSuccess,
       PayboxOnCancel: handleCancel,
     };
@@ -284,6 +280,7 @@ export async function openPaybox(
       PayboxTypeIdentification: idType,
       PayboxPagoInmediato: true,
       PayboxButtonchester: "true",
+      PayboxPagoPlux: false,
       PayboxRequired: false,
     };
 
@@ -300,13 +297,14 @@ export async function openPaybox(
 
     // 3. Cargar SDK si no está en el DOM
     if (!window.__payboxLoaded || !document.getElementById(PAYBOX_ID)) {
-       onStatus(`Conectando con PagoPlux ${IS_PRODUCTION ? "Production" : "Sandbox"}...`);
+      onStatus("Conectando con PagoPlux Sandbox...");
       await loadScript(PAYBOX_ID, PAYBOX_SRC);
       window.__payboxLoaded = true;
     }
 
     // Re-evaluar evento de carga
-    if (!window.__payboxPreloaded) window.dispatchEvent(new Event("load"));
+    // SDK binds the generated trigger from its window load handler.
+    window.dispatchEvent(new Event("load"));
 
     // 4. Disparar clic
     onStatus("Desplegando ventana de pago seguro...");

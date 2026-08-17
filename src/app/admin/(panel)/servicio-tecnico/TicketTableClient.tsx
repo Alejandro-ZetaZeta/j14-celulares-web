@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getClientProfiles, linkTicketToClient, markReadyForDelivery, updateTicketStatus } from "@/lib/actions/admin-service";
+import { getClientProfiles, linkTicketToClient, markDelivered, markReadyForDelivery, updateTicketStatus } from "@/lib/actions/admin-service";
 import { clearTicketChat, getTicketMessages, getUnreadTicketMessageCounts } from "@/lib/actions/ticket-chat";
 import ChatDrawer from "@/components/service/ChatDrawer";
 import type { AppRole, TechnicalService, TechnicalServiceWithProfile, TicketMessage } from "@/types/database";
@@ -10,13 +10,15 @@ const STATUS_LABELS: Record<string, { label: string; color: string; bg: string }
   received:           { label: "Recibido",           color: "#86868B", bg: "#F5F5F7" },
   under_diagnosis:    { label: "En Diagnóstico",     color: "#FF9F0A", bg: "#FFF8EC" },
   ready_for_delivery: { label: "Listo para Entrega", color: "#34C759", bg: "#F0FBF4" },
+  delivered:          { label: "Entregado",           color: "#8E8CF7", bg: "#F3F2FF" },
 };
 
 const FILTER_OPTIONS = [
-  { value: "all", label: "Todos" },
-  { value: "received", label: "Recibidos" },
-  { value: "under_diagnosis", label: "En Diagnóstico" },
+  { value: "all",                label: "Todos" },
+  { value: "received",           label: "Recibidos" },
+  { value: "under_diagnosis",    label: "En Diagnóstico" },
   { value: "ready_for_delivery", label: "Listos" },
+  { value: "delivered",          label: "Entregados" },
 ];
 
 export default function TicketTableClient({
@@ -59,6 +61,15 @@ export default function TicketTableClient({
     await markReadyForDelivery(id);
     setTickets((prev) =>
       prev.map((t) => (t.id === id ? { ...t, status: "ready_for_delivery", progressing: false } : t))
+    );
+    setSaving(null);
+  }
+
+  async function handleMarkDelivered(id: string) {
+    setSaving(id);
+    await markDelivered(id);
+    setTickets((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, status: "delivered", progressing: false } : t))
     );
     setSaving(null);
   }
@@ -117,8 +128,9 @@ export default function TicketTableClient({
         <div className="flex flex-col gap-3">
           {filtered.map((ticket) => {
             const isExpanded = expandedId === ticket.id;
-            const statusStyle = STATUS_LABELS[ticket.status];
+            const statusStyle = STATUS_LABELS[ticket.status] ?? STATUS_LABELS["received"];
             const clientContact = ticket.client_profile?.phone || ticket.client_contact;
+            const isDelivered = ticket.status === "delivered";
 
             return (
               <div key={ticket.id} className="card-apple hover:!transform-none overflow-visible">
@@ -147,14 +159,18 @@ export default function TicketTableClient({
                 {/* Expanded edit section */}
                 {isExpanded && (
                   <div className="px-5 pb-5 border-t border-[var(--border)] pt-4 flex flex-col gap-4">
-                    {/* Status selector */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      {(["received", "under_diagnosis", "ready_for_delivery"] as const).map((s) => (
+                    {/* Status selector — 4 buttons in 2×2 on mobile, 4 cols on sm+ */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {(["received", "under_diagnosis", "ready_for_delivery", "delivered"] as const).map((s) => (
                         <button
                           key={s}
                           id={`set-status-${ticket.id}-${s}`}
                           disabled={ticket.status === s || saving === ticket.id}
-                          onClick={() => s === "ready_for_delivery" ? handleMarkReady(ticket.id) : handleStatusUpdate(ticket.id, { status: s })}
+                          onClick={() => {
+                            if (s === "ready_for_delivery") return handleMarkReady(ticket.id);
+                            if (s === "delivered") return handleMarkDelivered(ticket.id);
+                            return handleStatusUpdate(ticket.id, { status: s });
+                          }}
                           className={`py-2 rounded-[var(--radius-md)] text-[13px] font-semibold border transition-all ${
                             ticket.status === s
                               ? "border-[var(--accent)] text-[var(--accent)] bg-[var(--accent-light)]"
@@ -185,22 +201,32 @@ export default function TicketTableClient({
                       </div>
                     )}
 
-                    {/* Current details textarea */}
-                     <div className="flex flex-col gap-1.5">
-                      <label className="text-[13px] font-medium text-[var(--text-secondary)]">Detalles actuales (visible al cliente)</label>
-                      <textarea
-                        id={`details-${ticket.id}`}
-                        defaultValue={ticket.current_details}
-                        rows={2}
-                        onBlur={(e) => {
-                          if (e.target.value !== ticket.current_details) {
-                            handleStatusUpdate(ticket.id, { current_details: e.target.value });
-                          }
-                        }}
-                        placeholder="Ej. Cambiando pin de carga..."
-                        className="px-3 py-2 rounded-[var(--radius-md)] border border-[var(--border-strong)] text-[14px] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] resize-none"
-                      />
-                     </div>
+                    {/* Current details textarea (hidden once delivered) */}
+                    {!isDelivered && (
+                       <div className="flex flex-col gap-1.5">
+                        <label className="text-[13px] font-medium text-[var(--text-secondary)]">Detalles actuales (visible al cliente)</label>
+                        <textarea
+                          id={`details-${ticket.id}`}
+                          defaultValue={ticket.current_details}
+                          rows={2}
+                          onBlur={(e) => {
+                            if (e.target.value !== ticket.current_details) {
+                              handleStatusUpdate(ticket.id, { current_details: e.target.value });
+                            }
+                          }}
+                          placeholder="Ej. Cambiando pin de carga..."
+                          className="px-3 py-2 rounded-[var(--radius-md)] border border-[var(--border-strong)] text-[14px] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] resize-none"
+                        />
+                       </div>
+                    )}
+
+                    {/* Delivered confirmation banner */}
+                    {isDelivered && (
+                      <div className="flex items-center gap-3 rounded-[var(--radius-md)] bg-[#8E8CF7]/10 border border-[#8E8CF7]/30 px-4 py-3">
+                        <span className="text-[20px]">📦</span>
+                        <p className="text-[14px] font-semibold text-[#6B69D6]">Equipo entregado al cliente.</p>
+                      </div>
+                    )}
 
                      <div className="flex flex-col gap-1.5">
                        <label htmlFor={`client-${ticket.id}`} className="text-[13px] font-medium text-[var(--text-secondary)]">Cliente registrado</label>

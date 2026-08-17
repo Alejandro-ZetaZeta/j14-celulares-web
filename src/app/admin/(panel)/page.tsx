@@ -22,8 +22,9 @@ async function DashboardContent() {
   const lowStock = typedProducts.filter((product) =>
     product.product_variants?.some((variant) => variant.stock <= 2 && variant.stock > 0)
   ).length;
-  const openTickets = typedTickets.filter((ticket) => ticket.status !== "ready_for_delivery").length;
+  const openTickets = typedTickets.filter((ticket) => ticket.status !== "ready_for_delivery" && ticket.status !== "delivered").length;
   const readyTickets = typedTickets.filter((ticket) => ticket.status === "ready_for_delivery").length;
+  const deliveredTickets = typedTickets.filter((ticket) => ticket.status === "delivered").length;
 
   const stats = [
     { label: "Productos", value: typedProducts.length, icon: "📦", href: "/admin/productos", color: "var(--accent)" },
@@ -31,6 +32,7 @@ async function DashboardContent() {
     { label: "Stock Bajo", value: lowStock, icon: "⚠️", href: "/admin/productos", color: "var(--status-amber)" },
     { label: "Tickets Abiertos", value: openTickets, icon: "🔧", href: "/admin/servicio-tecnico", color: "#FF6B35" },
     { label: "Listos p/ Entrega", value: readyTickets, icon: "✅", href: "/admin/servicio-tecnico", color: "var(--status-green)" },
+    { label: "Entregados", value: deliveredTickets, icon: "📦", href: "/admin/servicio-tecnico", color: "#8E8CF7" },
   ];
 
   return (
@@ -41,7 +43,7 @@ async function DashboardContent() {
       </div>
 
       {/* Stats grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-10">
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 mb-10">
         {stats.map((stat) => (
           <Link
             key={stat.label}

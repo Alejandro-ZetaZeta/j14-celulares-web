@@ -124,6 +124,21 @@ export async function markReadyForDelivery(id: string) {
   if (data?.ticket_id) updateTag(`ticket-${data.ticket_id}`);
 }
 
+export async function markDelivered(id: string) {
+  await requireAdminOrTechnician();
+  const db = (await createInsforgeServerClient()).database;
+
+  const { data, error } = await db
+    .from("technical_service")
+    .update({ status: "delivered", progressing: false })
+    .eq("id", id)
+    .select("ticket_id")
+    .single();
+  if (error) throw new Error(error.message);
+  revalidatePath("/admin/servicio-tecnico");
+  if (data?.ticket_id) updateTag(`ticket-${data.ticket_id}`);
+}
+
 export async function deleteTicket(id: string) {
   await requireAdminOrTechnician();
   const db = (await createInsforgeServerClient()).database;
@@ -163,4 +178,3 @@ export async function linkTicketToClient(ticketId: string, userId: string | null
   revalidatePath("/admin/servicio-tecnico");
   if (data?.ticket_id) updateTag(`ticket-${data.ticket_id}`);
 }
-

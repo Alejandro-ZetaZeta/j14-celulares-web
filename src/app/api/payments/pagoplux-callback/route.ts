@@ -34,8 +34,18 @@ function paymentApproved(response: unknown): boolean {
 }
 
 function transactionId(response: unknown): string | null {
-  const value = findValue(response, ["transactionId", "transaction_id", "idTransaction", "paymentId", "payment_id"]);
-  return typeof value === "string" || typeof value === "number" ? String(value) : null;
+  const value = findValue(response, [
+    "id_transaccion",
+    "token",
+    "transactionId",
+    "transaction_id",
+    "idTransaction",
+    "paymentId",
+    "payment_id",
+  ]);
+  if (typeof value !== "string" && typeof value !== "number") return null;
+  const normalized = String(value).trim();
+  return normalized || null;
 }
 
 function validBody(value: unknown): value is CallbackBody {
@@ -104,12 +114,14 @@ export async function POST(request: Request) {
       item.promotion_id = allocation > 0 ? promotionId : null;
     }
   }
-  const subtotalBase15 = roundCents(orderItems.reduce((sum, item) => sum + item.subtotal, 0));
+  // Catalog and PagoPlux amounts are VAT-inclusive; derive taxable base from gross total.
+  const grossTotal = roundCents(orderItems.reduce((sum, item) => sum + item.subtotal, 0));
   const { data: taxSetting } = await insforgeAdmin.database.from("site_settings").select("value").eq("key", "tax_rate").maybeSingle();
   const configuredTaxRate = Number(taxSetting?.value);
   const ivaRate = Number.isFinite(configuredTaxRate) && configuredTaxRate >= 0 && configuredTaxRate <= 100 ? configuredTaxRate / 100 : IVA_RATE;
-  const ivaAmount = roundCents(subtotalBase15 * ivaRate);
-  const totalAmount = roundCents(subtotalBase15 + ivaAmount);
+  const subtotalBase15 = roundCents(grossTotal / (1 + ivaRate));
+  const ivaAmount = roundCents(grossTotal - subtotalBase15);
+  const totalAmount = grossTotal;
   let userId: string | null = null;
   try {
     const client = await createInsforgeServerClient();

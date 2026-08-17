@@ -3,7 +3,7 @@
 // ============================================================
 
 export type ProductType = string;
-export type ServiceStatus = 'received' | 'under_diagnosis' | 'ready_for_delivery';
+export type ServiceStatus = 'received' | 'under_diagnosis' | 'ready_for_delivery' | 'delivered';
 export type AppRole = 'admin' | 'technician' | 'client';
 export type OrderStatus = 'PENDING' | 'APPROVED' | 'DISPATCHED' | 'DELIVERED' | 'REJECTED' | 'CANCELLED';
 export type PromotionType = 'percentage' | 'fixed' | 'gift';
