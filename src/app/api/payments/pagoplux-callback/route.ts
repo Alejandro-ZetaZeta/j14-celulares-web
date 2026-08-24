@@ -142,7 +142,7 @@ export async function POST(request: Request) {
     customerId = String(data.id);
   }
 
-  const { data: order, error: orderError } = await insforgeAdmin.database.from("orders").insert([{ customer_id: customerId, user_id: userId, subtotal_base_0: 0, subtotal_base_15: subtotalBase15, iva_amount: ivaAmount, total_amount: totalAmount, discount_amount: discountAmount, promotion_code: body.promotionCode?.trim().toUpperCase() ?? null, status: "PENDING", pagoplux_transaction_id: transaction, pagoplux_response_payload: body.pagopluxResponse }]).select("id").single();
+  const { data: order, error: orderError } = await insforgeAdmin.database.from("orders").insert([{ customer_id: customerId, user_id: userId, subtotal_base_0: 0, subtotal_base_15: subtotalBase15, iva_amount: ivaAmount, total_amount: totalAmount, discount_amount: discountAmount, promotion_code: body.promotionCode?.trim().toUpperCase() ?? null, status: "PENDING", payment_method: "PagoPlux", pagoplux_transaction_id: transaction, pagoplux_response_payload: body.pagopluxResponse }]).select("id").single();
   if (orderError || !order) return NextResponse.json({ error: "No se pudo registrar la orden." }, { status: 500 });
 
   const reservedItems: typeof orderItems = [];

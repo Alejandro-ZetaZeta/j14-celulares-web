@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { createServerClient } from "@insforge/sdk/ssr";
+import { insforgeAdmin } from "@/lib/insforge-admin";
 import { requireAdmin, requireAdminOrTechnician } from "@/lib/auth/roles";
 
 /**
@@ -13,7 +14,7 @@ export async function createInsforgeServerClient() {
 
 export async function getAdminDatabase() {
   await requireAdmin();
-  return (await createInsforgeServerClient()).database;
+  return insforgeAdmin.database;
 }
 
 export async function getServiceDatabase() {

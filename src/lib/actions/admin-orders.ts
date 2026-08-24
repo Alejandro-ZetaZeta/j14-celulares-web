@@ -43,8 +43,11 @@ export interface AdminOrdersResult {
 
 interface OrderWithCustomer extends Omit<Order, "pagoplux_response_payload"> {
   pagoplux_response_payload?: Record<string, unknown> | null;
-  customers: Customer[];
+  customers: Customer | Customer[] | null;
 }
+
+type RelatedProduct = Pick<Product, "id" | "brand" | "model" | "image_url">;
+type RelatedVariant = Pick<ProductVariant, "id" | "capacity" | "color">;
 
 interface OrderWithRelations extends OrderWithCustomer {
   order_items: Array<{
@@ -55,8 +58,10 @@ interface OrderWithRelations extends OrderWithCustomer {
     quantity: number;
     unit_price: number;
     subtotal: number;
-    products: Array<Pick<Product, "id" | "brand" | "model" | "image_url">>;
-    product_variants: Array<Pick<ProductVariant, "id" | "capacity" | "color">>;
+    is_gift?: boolean;
+    promotion_id?: string | null;
+    products: RelatedProduct | RelatedProduct[] | null;
+    product_variants: RelatedVariant | RelatedVariant[] | null;
   }>;
 }
 
@@ -64,6 +69,11 @@ const PAID_STATUSES: readonly OrderStatus[] = ["APPROVED", "DISPATCHED", "DELIVE
 
 function asNumber(value: unknown): number {
   return typeof value === "number" ? value : Number(value ?? 0);
+}
+
+function relatedRows<T>(value: T | T[] | null | undefined): T[] {
+  if (Array.isArray(value)) return value;
+  return value ? [value] : [];
 }
 
 function normalizeSearch(value: string | undefined): string {
@@ -101,7 +111,7 @@ function dateRange(filters: AdminOrderFilters): { from: string | null; to: strin
 
 function mapOrder(row: OrderWithCustomer): AdminOrder {
   const { customers, ...order } = row;
-  return { ...order, pagoplux_response_payload: row.pagoplux_response_payload ?? null, customer: customers[0] ?? {
+  return { ...order, pagoplux_response_payload: row.pagoplux_response_payload ?? null, customer: relatedRows(customers)[0] ?? {
     id: order.customer_id,
     identification: "",
     full_name: "Cliente sin datos",
@@ -124,8 +134,10 @@ function mapDetail(row: OrderWithRelations): AdminOrderDetail {
       quantity: item.quantity,
       unit_price: asNumber(item.unit_price),
       subtotal: asNumber(item.subtotal),
-      product: item.products[0] ?? { id: item.product_id, brand: "Producto", model: "No disponible", image_url: null },
-      variant: item.product_variants[0] ?? { id: item.variant_id, capacity: "", color: "" },
+      is_gift: item.is_gift ?? false,
+      promotion_id: item.promotion_id ?? null,
+      product: relatedRows(item.products)[0] ?? { id: item.product_id, brand: "Producto", model: "No disponible", image_url: null },
+      variant: relatedRows(item.product_variants)[0] ?? { id: item.variant_id, capacity: "", color: "" },
     })),
   };
 }
@@ -168,7 +180,7 @@ export async function getAdminOrders(filters: AdminOrderFilters = {}): Promise<A
     return { orders: [], metrics: await getMetrics(db), page, pageSize, total: 0, totalPages: 0 };
   }
 
-  const select = "id, customer_id, user_id, subtotal_base_0, subtotal_base_15, iva_amount, total_amount, status, payment_method, tracking_number, internal_notes, delivery_observations, pagoplux_transaction_id, created_at, updated_at, customers(id, identification, full_name, email, phone, address, user_id, created_at)";
+  const select = "id, customer_id, user_id, subtotal_base_0, subtotal_base_15, iva_amount, total_amount, discount_amount, promotion_code, status, payment_method, tracking_number, internal_notes, delivery_observations, pagoplux_transaction_id, created_at, updated_at, customers(id, identification, full_name, email, phone, address, user_id, created_at)";
   let query = db.from("orders").select(select, { count: "exact" });
   query = applyOrderFilters(query, filters, customerIds, search);
   const from = (page - 1) * pageSize;
@@ -208,7 +220,7 @@ export async function getAdminOrderDetail(orderId: string): Promise<AdminOrderDe
 
   const { data, error } = await db
     .from("orders")
-    .select("id, customer_id, user_id, subtotal_base_0, subtotal_base_15, iva_amount, total_amount, status, payment_method, tracking_number, internal_notes, delivery_observations, pagoplux_transaction_id, created_at, updated_at, customers(id, identification, full_name, email, phone, address, user_id, created_at), order_items(id, order_id, product_id, variant_id, quantity, unit_price, subtotal, products(id, brand, model, image_url), product_variants(id, capacity, color))")
+    .select("id, customer_id, user_id, subtotal_base_0, subtotal_base_15, iva_amount, total_amount, discount_amount, promotion_code, status, payment_method, tracking_number, internal_notes, delivery_observations, pagoplux_transaction_id, created_at, updated_at, customers(id, identification, full_name, email, phone, address, user_id, created_at), order_items(id, order_id, product_id, variant_id, quantity, unit_price, subtotal, is_gift, promotion_id, products(id, brand, model, image_url), product_variants(id, capacity, color))")
     .eq("id", orderId)
     .maybeSingle();
   if (error) throw new Error(error.message);
