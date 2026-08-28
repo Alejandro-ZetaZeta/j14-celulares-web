@@ -32,7 +32,7 @@ export default function TermsContent() {
       <section>
         <h2 className="mb-3 text-[21px] font-bold text-[var(--text-primary)]">4. Precios, pedidos y pagos</h2>
         <p>Los precios se expresan en dólares de los Estados Unidos de América e incluyen los impuestos que correspondan, salvo indicación expresa. J14 puede corregir errores manifiestos de precio antes de confirmar una orden y comunicará esa situación a la persona compradora.</p>
-        <p className="mt-3">El pedido queda sujeto a validación de identidad, inventario y autorización del medio de pago. El procesamiento con PagoPlux se realiza bajo sus propios términos y medidas de seguridad. J14 no almacena datos completos de tarjetas.</p>
+        <p className="mt-3">El pedido queda sujeto a validación de identidad, inventario y autorización del medio de pago. El procesamiento con Dataweb de Datafast se realiza bajo sus propios términos y medidas de seguridad. J14 no almacena datos completos de tarjetas.</p>
       </section>
 
       <section>

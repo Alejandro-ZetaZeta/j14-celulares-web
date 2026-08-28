@@ -3,10 +3,12 @@ import { insforgeAdmin } from "@/lib/insforge-admin";
 import { createInsforgeServerClient } from "@/lib/insforge-server";
 import { roundCents, IVA_RATE } from "@/lib/cart";
 import { calculatePromotion } from "@/lib/promotions";
+import { datawebApproved } from "@/lib/dataweb";
 
 interface CallbackItem { variantId: string; quantity: number; isGift?: boolean; giftForProductId?: string }
 interface CallbackBody {
-  pagopluxResponse: unknown;
+  paymentResponse?: unknown;
+  paymentTransaction?: string;
   customer: { fullName: string; cedula: string; email: string; phone: string; address: string };
   items: CallbackItem[];
   promotionCode?: string;
@@ -27,10 +29,7 @@ function findValue(value: unknown, keys: string[]): unknown {
 }
 
 function paymentApproved(response: unknown): boolean {
-  const status = findValue(response, ["status", "estado", "result", "responseCode", "response_code", "code"]);
-  if (status === true || status === 1 || status === "1") return true;
-  if (typeof status !== "string") return false;
-  return ["approved", "aprobado", "success", "successful", "succeeded", "successed", "ok", "00"].includes(status.trim().toLowerCase());
+  return isRecord(response) && isRecord(response.result) && datawebApproved(response.result.code);
 }
 
 function transactionId(response: unknown): string | null {
@@ -62,14 +61,18 @@ export async function POST(request: Request) {
   let body: unknown;
   try { body = await request.json(); } catch { return NextResponse.json({ error: "JSON inválido." }, { status: 400 }); }
   if (!validBody(body)) return NextResponse.json({ error: "Datos de pago incompletos." }, { status: 400 });
+  if (!process.env.DATAWEB_INTERNAL_SECRET || request.headers.get("x-dataweb-internal-secret") !== process.env.DATAWEB_INTERNAL_SECRET) {
+    return NextResponse.json({ error: "Solicitud interna no autorizada." }, { status: 403 });
+  }
 
-  if (!paymentApproved(body.pagopluxResponse)) {
+  const paymentResponse = body.paymentResponse;
+  if (!paymentApproved(paymentResponse)) {
     return NextResponse.json({ error: "Pago no aprobado." }, { status: 402 });
   }
 
-  const transaction = transactionId(body.pagopluxResponse);
-  if (!transaction) return NextResponse.json({ error: "Respuesta de PagoPlux sin ID de transacción." }, { status: 400 });
-  const { data: previousOrder } = await insforgeAdmin.database.from("orders").select("id, status").eq("pagoplux_transaction_id", transaction).maybeSingle();
+  const transaction = body.paymentTransaction || transactionId(paymentResponse);
+  if (!transaction) return NextResponse.json({ error: "Respuesta de Dataweb sin ID de transacción." }, { status: 400 });
+  const { data: previousOrder } = await insforgeAdmin.database.from("orders").select("id, status").eq("payment_provider", "dataweb").eq("payment_transaction_id", transaction).maybeSingle();
   if (previousOrder?.id) return NextResponse.json({ orderId: previousOrder.id, status: previousOrder.status });
 
   const requestedQuantities = new Map<string, number>();
@@ -80,7 +83,7 @@ export async function POST(request: Request) {
   const { data: variants, error: variantsError } = await insforgeAdmin.database.from("product_variants").select("id, product_id, price, stock").in("id", variantIds);
   if (variantsError || !variants || variants.length !== variantIds.length) return NextResponse.json({ error: "Uno o más productos ya no están disponibles." }, { status: 409 });
 
-  const byId = new Map(variants.map((variant) => [String(variant.id), variant as { id: string; product_id: string; price: number; stock: number }]));
+  const byId = new Map<string, { id: string; product_id: string; price: number; stock: number }>(variants.map((variant) => [String(variant.id), variant as { id: string; product_id: string; price: number; stock: number }]));
   const orderItems: Array<{ product_id: string; variant_id: string; quantity: number; unit_price: number; subtotal: number; is_gift: boolean; promotion_id: string | null }> = normalizedItems.map((item) => {
     const variant = byId.get(item.variantId)!;
     return { product_id: variant.product_id, variant_id: variant.id, quantity: item.quantity, unit_price: Number(variant.price), subtotal: roundCents(Number(variant.price) * item.quantity), is_gift: false, promotion_id: null };
@@ -89,6 +92,7 @@ export async function POST(request: Request) {
   if (giftVariantIds.length) {
     const { data: giftVariants } = await insforgeAdmin.database.from("product_variants").select("id, product_id, price, stock").in("id", giftVariantIds);
     const { data: giftLinks } = await insforgeAdmin.database.from("product_gifts").select("product_id, gift_product_id, quantity").in("product_id", orderItems.map((item) => item.product_id));
+    for (const variant of giftVariants ?? []) byId.set(String(variant.id), variant as { id: string; product_id: string; price: number; stock: number });
     for (const gift of giftItems) {
       const variant = giftVariants?.find((candidate) => candidate.id === gift.variantId);
       const link = giftLinks?.find((candidate) => candidate.product_id === gift.giftForProductId && candidate.gift_product_id === variant?.product_id);
@@ -114,7 +118,7 @@ export async function POST(request: Request) {
       item.promotion_id = allocation > 0 ? promotionId : null;
     }
   }
-  // Catalog and PagoPlux amounts are VAT-inclusive; derive taxable base from gross total.
+  // Catalog and Dataweb amounts are VAT-inclusive; derive taxable base from gross total.
   const grossTotal = roundCents(orderItems.reduce((sum, item) => sum + item.subtotal, 0));
   const { data: taxSetting } = await insforgeAdmin.database.from("site_settings").select("value").eq("key", "tax_rate").maybeSingle();
   const configuredTaxRate = Number(taxSetting?.value);
@@ -142,7 +146,7 @@ export async function POST(request: Request) {
     customerId = String(data.id);
   }
 
-  const { data: order, error: orderError } = await insforgeAdmin.database.from("orders").insert([{ customer_id: customerId, user_id: userId, subtotal_base_0: 0, subtotal_base_15: subtotalBase15, iva_amount: ivaAmount, total_amount: totalAmount, discount_amount: discountAmount, promotion_code: body.promotionCode?.trim().toUpperCase() ?? null, status: "PENDING", payment_method: "PagoPlux", pagoplux_transaction_id: transaction, pagoplux_response_payload: body.pagopluxResponse }]).select("id").single();
+  const { data: order, error: orderError } = await insforgeAdmin.database.from("orders").insert([{ customer_id: customerId, user_id: userId, subtotal_base_0: 0, subtotal_base_15: subtotalBase15, iva_amount: ivaAmount, total_amount: totalAmount, discount_amount: discountAmount, promotion_code: body.promotionCode?.trim().toUpperCase() ?? null, status: "PENDING", payment_method: "Dataweb", payment_provider: "dataweb", payment_transaction_id: transaction, payment_response_payload: paymentResponse }]).select("id").single();
   if (orderError || !order) return NextResponse.json({ error: "No se pudo registrar la orden." }, { status: 500 });
 
   const reservedItems: typeof orderItems = [];

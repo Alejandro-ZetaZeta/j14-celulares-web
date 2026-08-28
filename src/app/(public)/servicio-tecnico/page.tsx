@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import TicketSearchForm from "./TicketSearchForm";
+import { getSiteSettings } from "@/lib/site-settings";
 
 export const metadata: Metadata = {
   title: "Consulta tu Servicio Técnico — J14 Celulares",
@@ -8,7 +9,8 @@ export const metadata: Metadata = {
     "Ingresa tu número de ticket para conocer el estado actual de tu reparación en tiempo real.",
 };
 
-export default function ServicioTecnicoPage() {
+export default async function ServicioTecnicoPage() {
+  const { howItWorks } = await getSiteSettings();
   return (
     <div className="min-h-screen bg-[var(--bg-primary)]">
       {/* Hero header */}
@@ -40,31 +42,15 @@ export default function ServicioTecnicoPage() {
             <h2 className="text-headline text-center mb-12">¿Cómo funciona?</h2>
           </AnimatedSection>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
-            {[
-              {
-                step: "1",
-                title: "Entrega tu equipo",
-                desc: "Trae tu dispositivo a nuestro local. El técnico lo ingresa al sistema y te entregamos un número de ticket único.",
-              },
-              {
-                step: "2",
-                title: "Seguimiento en tiempo real",
-                desc: "Ingresa tu número de ticket aquí y ve el estado actualizado por el técnico en cada etapa.",
-              },
-              {
-                step: "3",
-                title: "Recoge tu equipo",
-                desc: "Cuando el estado cambie a \"Listo para Entrega\", visítanos para recoger tu dispositivo reparado.",
-              },
-            ].map((item, i) => (
-              <AnimatedSection key={item.step} delay={i * 0.1}>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {howItWorks.filter((item) => item.visible).map((item, i) => (
+              <AnimatedSection key={item.id} delay={i * 0.1}>
                 <div className="card-apple p-6 hover:!transform-none">
                   <div className="w-10 h-10 rounded-full bg-[var(--accent)] flex items-center justify-center text-white font-bold text-[16px] mb-4">
-                    {item.step}
+                    {i + 1}
                   </div>
                   <h3 className="text-title mb-2">{item.title}</h3>
-                  <p className="text-caption leading-relaxed text-[14px]">{item.desc}</p>
+                  <p className="text-caption leading-relaxed text-[14px]">{item.description}</p>
                 </div>
               </AnimatedSection>
             ))}

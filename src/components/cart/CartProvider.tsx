@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useReducer, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useState } from "react";
 import type { CartItem, CartTotals } from "@/types/cart";
 import { computeCartTotals } from "@/lib/cart";
 import CartDrawer from "@/components/cart/CartDrawer";
@@ -33,7 +33,7 @@ type Action =
 
 function reducer(items: CartItem[], action: Action): CartItem[] {
   if (action.type === "hydrate") return action.items;
-  if (action.type === "clear") return [];
+  if (action.type === "clear") return items.length === 0 ? items : [];
   if (action.type === "remove") return items.filter((item) => item.variantId !== action.variantId);
 
   if (action.type === "quantity") {
@@ -89,6 +89,8 @@ export default function CartProvider({ children, initialTaxRate = 15 }: { childr
     if (hydrated) window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
   }, [hydrated, items]);
 
+  const clearCart = useCallback(() => dispatch({ type: "clear" }), []);
+
   const value = useMemo<CartContextValue>(() => ({
     items,
     totals: computeCartTotals(items, initialTaxRate / 100, promotionDiscount, promotionCode || null),
@@ -98,7 +100,7 @@ export default function CartProvider({ children, initialTaxRate = 15 }: { childr
     addToCart: (item, quantity = 1) => { dispatch({ type: "add", item, quantity }); setOpen(true); },
     removeFromCart: (variantId) => dispatch({ type: "remove", variantId }),
     updateQuantity: (variantId, quantity) => dispatch({ type: "quantity", variantId, quantity }),
-    clearCart: () => dispatch({ type: "clear" }),
+    clearCart,
     openCart: () => setOpen(true),
     closeCart: () => setOpen(false),
     promotionCode,
@@ -120,7 +122,7 @@ export default function CartProvider({ children, initialTaxRate = 15 }: { childr
       } finally { setApplyingPromotion(false); }
     },
     removePromotion: () => { setPromotionCode(""); setPromotionDiscount(0); setPromotionError(""); },
-  }), [items, open, initialTaxRate, promotionDiscount, promotionCode, promotionError, applyingPromotion]);
+  }), [items, open, initialTaxRate, promotionDiscount, promotionCode, promotionError, applyingPromotion, clearCart]);
 
   return <CartContext.Provider value={value}>{children}<CartDrawer /></CartContext.Provider>;
 }

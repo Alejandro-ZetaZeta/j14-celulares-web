@@ -41,8 +41,7 @@ export interface AdminOrdersResult {
   totalPages: number;
 }
 
-interface OrderWithCustomer extends Omit<Order, "pagoplux_response_payload"> {
-  pagoplux_response_payload?: Record<string, unknown> | null;
+interface OrderWithCustomer extends Order {
   customers: Customer | Customer[] | null;
 }
 
@@ -111,7 +110,7 @@ function dateRange(filters: AdminOrderFilters): { from: string | null; to: strin
 
 function mapOrder(row: OrderWithCustomer): AdminOrder {
   const { customers, ...order } = row;
-  return { ...order, pagoplux_response_payload: row.pagoplux_response_payload ?? null, customer: relatedRows(customers)[0] ?? {
+  return { ...order, customer: relatedRows(customers)[0] ?? {
     id: order.customer_id,
     identification: "",
     full_name: "Cliente sin datos",
@@ -180,7 +179,7 @@ export async function getAdminOrders(filters: AdminOrderFilters = {}): Promise<A
     return { orders: [], metrics: await getMetrics(db), page, pageSize, total: 0, totalPages: 0 };
   }
 
-  const select = "id, customer_id, user_id, subtotal_base_0, subtotal_base_15, iva_amount, total_amount, discount_amount, promotion_code, status, payment_method, tracking_number, internal_notes, delivery_observations, pagoplux_transaction_id, created_at, updated_at, customers(id, identification, full_name, email, phone, address, user_id, created_at)";
+  const select = "id, customer_id, user_id, subtotal_base_0, subtotal_base_15, iva_amount, total_amount, discount_amount, promotion_code, status, payment_method, payment_provider, payment_transaction_id, tracking_number, internal_notes, delivery_observations, created_at, updated_at, customers(id, identification, full_name, email, phone, address, user_id, created_at)";
   let query = db.from("orders").select(select, { count: "exact" });
   query = applyOrderFilters(query, filters, customerIds, search);
   const from = (page - 1) * pageSize;
@@ -220,7 +219,7 @@ export async function getAdminOrderDetail(orderId: string): Promise<AdminOrderDe
 
   const { data, error } = await db
     .from("orders")
-    .select("id, customer_id, user_id, subtotal_base_0, subtotal_base_15, iva_amount, total_amount, discount_amount, promotion_code, status, payment_method, tracking_number, internal_notes, delivery_observations, pagoplux_transaction_id, created_at, updated_at, customers(id, identification, full_name, email, phone, address, user_id, created_at), order_items(id, order_id, product_id, variant_id, quantity, unit_price, subtotal, is_gift, promotion_id, products(id, brand, model, image_url), product_variants(id, capacity, color))")
+    .select("id, customer_id, user_id, subtotal_base_0, subtotal_base_15, iva_amount, total_amount, discount_amount, promotion_code, status, payment_method, payment_provider, payment_transaction_id, tracking_number, internal_notes, delivery_observations, created_at, updated_at, customers(id, identification, full_name, email, phone, address, user_id, created_at), order_items(id, order_id, product_id, variant_id, quantity, unit_price, subtotal, is_gift, promotion_id, products(id, brand, model, image_url), product_variants(id, capacity, color))")
     .eq("id", orderId)
     .maybeSingle();
   if (error) throw new Error(error.message);
