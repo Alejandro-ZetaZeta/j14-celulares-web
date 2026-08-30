@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getTicketByCode } from "@/lib/actions/service";
 import type { TechnicalService } from "@/types/database";
+import { formatDate } from "@/lib/format-date";
 
 const STATUS_STEPS = [
   {
@@ -42,8 +43,12 @@ interface TicketStatusProps {
 
 export default function TicketStatus({ initialTicket }: TicketStatusProps) {
   const [ticket, setTicket] = useState<TechnicalService>(initialTicket);
-  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    setLastUpdated(new Date());
+  }, []);
 
   // Polling-based real-time updates (InsForge SDK does not expose a channel/subscribe API)
   useEffect(() => {
@@ -224,14 +229,14 @@ export default function TicketStatus({ initialTicket }: TicketStatusProps) {
       {/* Footer */}
       <div className="flex flex-col gap-2 px-4 py-4 section-gray border-t border-[var(--border)] sm:flex-row sm:items-center sm:justify-between sm:px-8">
         <p className="text-[12px] text-[var(--text-tertiary)]">
-          Ingreso: {new Date(ticket.entry_date).toLocaleDateString("es-EC", { dateStyle: "medium" })}
+          Ingreso: {formatDate(ticket.entry_date, { dateStyle: "medium" })}
         </p>
         {isDelivered ? (
           <p className="text-[12px] font-semibold text-[#8E8CF7]">✓ Ticket cerrado</p>
         ) : (
           <div className="flex items-center gap-1.5 text-[12px] text-[var(--accent)]">
             <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-pulse" aria-hidden="true" />
-            Actualizado {lastUpdated.toLocaleTimeString("es-EC", { hour: "2-digit", minute: "2-digit" })} · cada 30s
+            Actualizado {lastUpdated ? lastUpdated.toLocaleTimeString("es-EC", { hour: "2-digit", minute: "2-digit" }) : "…"} · cada 30s
           </div>
         )}
       </div>

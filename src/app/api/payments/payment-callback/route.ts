@@ -5,7 +5,7 @@ import { roundCents, IVA_RATE } from "@/lib/cart";
 import { calculatePromotion } from "@/lib/promotions";
 import { datawebApproved } from "@/lib/dataweb";
 
-interface CallbackItem { variantId: string; quantity: number; isGift?: boolean; giftForProductId?: string }
+interface CallbackItem { variantId: string; quantity: number; giftVariantIds?: string[] }
 interface CallbackBody {
   paymentResponse?: unknown;
   paymentTransaction?: string;
@@ -52,7 +52,7 @@ function validBody(value: unknown): value is CallbackBody {
   const customer = value.customer;
   return ["fullName", "cedula", "email", "phone", "address"].every((key) => typeof customer[key] === "string" && customer[key].trim())
     && value.items.length > 0
-    && value.items.every((item) => isRecord(item) && typeof item.variantId === "string" && typeof item.quantity === "number" && Number.isInteger(item.quantity) && item.quantity > 0 && (item.isGift === undefined || typeof item.isGift === "boolean"));
+    && value.items.every((item) => isRecord(item) && typeof item.variantId === "string" && typeof item.quantity === "number" && Number.isInteger(item.quantity) && item.quantity > 0 && (item.giftVariantIds === undefined || (Array.isArray(item.giftVariantIds) && item.giftVariantIds.every((id) => typeof id === "string"))));
 }
 
 export async function POST(request: Request) {
@@ -76,9 +76,13 @@ export async function POST(request: Request) {
   if (previousOrder?.id) return NextResponse.json({ orderId: previousOrder.id, status: previousOrder.status });
 
   const requestedQuantities = new Map<string, number>();
-  for (const item of body.items) if (!item.isGift) requestedQuantities.set(item.variantId, (requestedQuantities.get(item.variantId) ?? 0) + item.quantity);
+  const giftSelections = new Map<string, string[]>();
+  for (const item of body.items) {
+    requestedQuantities.set(item.variantId, (requestedQuantities.get(item.variantId) ?? 0) + item.quantity);
+    const existing = giftSelections.get(item.variantId) ?? [];
+    giftSelections.set(item.variantId, [...existing, ...(item.giftVariantIds ?? [])]);
+  }
   const normalizedItems = [...requestedQuantities.entries()].map(([variantId, quantity]) => ({ variantId, quantity }));
-  const giftItems = body.items.filter((item) => item.isGift);
   const variantIds = normalizedItems.map((item) => item.variantId);
   const { data: variants, error: variantsError } = await insforgeAdmin.database.from("product_variants").select("id, product_id, price, stock").in("id", variantIds);
   if (variantsError || !variants || variants.length !== variantIds.length) return NextResponse.json({ error: "Uno o más productos ya no están disponibles." }, { status: 409 });
@@ -88,16 +92,22 @@ export async function POST(request: Request) {
     const variant = byId.get(item.variantId)!;
     return { product_id: variant.product_id, variant_id: variant.id, quantity: item.quantity, unit_price: Number(variant.price), subtotal: roundCents(Number(variant.price) * item.quantity), is_gift: false, promotion_id: null };
   });
-  const giftVariantIds = [...new Set(giftItems.map((item) => item.variantId))];
-  if (giftVariantIds.length) {
-    const { data: giftVariants } = await insforgeAdmin.database.from("product_variants").select("id, product_id, price, stock").in("id", giftVariantIds);
-    const { data: giftLinks } = await insforgeAdmin.database.from("product_gifts").select("product_id, gift_product_id, quantity").in("product_id", orderItems.map((item) => item.product_id));
-    for (const variant of giftVariants ?? []) byId.set(String(variant.id), variant as { id: string; product_id: string; price: number; stock: number });
-    for (const gift of giftItems) {
-      const variant = giftVariants?.find((candidate) => candidate.id === gift.variantId);
-      const link = giftLinks?.find((candidate) => candidate.product_id === gift.giftForProductId && candidate.gift_product_id === variant?.product_id);
-      if (!variant || !link || gift.quantity > Number(link.quantity) * Number(orderItems.find((item) => item.product_id === gift.giftForProductId)?.quantity ?? 0) || gift.quantity > Number(variant.stock)) return NextResponse.json({ error: "Regalo inválido o sin stock." }, { status: 409 });
-      orderItems.push({ product_id: variant.product_id, variant_id: variant.id, quantity: gift.quantity, unit_price: 0, subtotal: 0, is_gift: true, promotion_id: null });
+  const requestedGiftVariantIds = [...new Set(body.items.flatMap((item) => item.giftVariantIds ?? []))];
+  const { data: giftLinks } = await insforgeAdmin.database.from("product_gifts").select("product_id, gift_product_id, quantity").in("product_id", orderItems.map((item) => item.product_id));
+  let giftVariants: Array<{ id: string; product_id: string; price: number; stock: number }> = [];
+  if (requestedGiftVariantIds.length) {
+    const { data: fetched } = await insforgeAdmin.database.from("product_variants").select("id, product_id, price, stock").in("id", requestedGiftVariantIds);
+    giftVariants = fetched ?? [];
+    for (const variant of giftVariants) byId.set(String(variant.id), variant as { id: string; product_id: string; price: number; stock: number });
+  }
+  for (const parent of orderItems) {
+    const chosen = giftSelections.get(parent.variant_id) ?? [];
+    for (const link of (giftLinks ?? []).filter((candidate) => candidate.product_id === parent.product_id)) {
+      const variant = giftVariants.find((candidate) => String(candidate.product_id) === link.gift_product_id && chosen.includes(String(candidate.id)));
+      if (!variant) continue;
+      const giftQuantity = Number(link.quantity) * parent.quantity;
+      if (giftQuantity > Number(variant.stock)) return NextResponse.json({ error: "Regalo sin stock." }, { status: 409 });
+      orderItems.push({ product_id: variant.product_id, variant_id: variant.id, quantity: giftQuantity, unit_price: 0, subtotal: 0, is_gift: true, promotion_id: null });
     }
   }
   if (orderItems.some((item) => item.quantity > Number(byId.get(item.variant_id)?.stock ?? 0))) return NextResponse.json({ error: "Stock insuficiente para uno o más productos." }, { status: 409 });

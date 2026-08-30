@@ -18,8 +18,7 @@ export interface DatawebItem {
   color: string;
   unitPrice: number;
   quantity: number;
-  isGift?: boolean;
-  giftForProductId?: string;
+  giftVariantIds?: string[];
 }
 
 export function datawebBaseUrl(): string {

@@ -75,8 +75,16 @@ export default function CartProvider({ children, initialTaxRate = 15 }: { childr
     try {
       const saved = window.localStorage.getItem(STORAGE_KEY);
       if (saved) {
-        const parsed = JSON.parse(saved) as CartItem[];
-        if (Array.isArray(parsed)) dispatch({ type: "hydrate", items: parsed.filter(isCartItem).map((item) => ({ ...item, quantity: Math.min(item.quantity, item.stock) })) });
+        const parsed = JSON.parse(saved) as Array<CartItem & { isGift?: boolean; giftForProductId?: string }>;
+        if (Array.isArray(parsed)) {
+          const legacyGifts = parsed.filter((item) => item.isGift === true);
+          const parents = parsed.filter((item) => item.isGift !== true).map((item) => ({ ...item, gifts: Array.isArray(item.gifts) ? item.gifts : [] }));
+          const merged = parents.map((parent) => ({
+            ...parent,
+            gifts: legacyGifts.filter((gift) => gift.giftForProductId === parent.productId).map((gift) => ({ productId: gift.productId, variantId: gift.variantId, brand: gift.brand, model: gift.model, capacity: gift.capacity, color: gift.color, quantity: Math.max(1, Math.round(gift.quantity / Math.max(1, parent.quantity))) })),
+          }));
+          dispatch({ type: "hydrate", items: merged.filter(isCartItem).map((item) => ({ ...item, quantity: Math.min(item.quantity, item.stock) })) });
+        }
       }
     } catch {
       window.localStorage.removeItem(STORAGE_KEY);

@@ -5,6 +5,7 @@ import { getAdminOrders } from "@/lib/actions/admin-orders";
 import type { AdminOrderFilters, AdminOrdersResult } from "@/lib/actions/admin-orders";
 import type { AdminOrder, OrderStatus } from "@/types/database";
 import { formatCurrency } from "@/lib/cart";
+import { formatDate } from "@/lib/format-date";
 import OrderDetailDrawer from "./OrderDetailDrawer";
 
 const STATUS_LABELS: Record<OrderStatus, string> = {
@@ -42,13 +43,6 @@ const datePresets: Array<{ value: NonNullable<AdminOrderFilters["datePreset"]>; 
   { value: "custom", label: "Personalizado" },
 ];
 
-function formatDate(value: string): string {
-  return new Intl.DateTimeFormat("es-EC", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
-}
-
 function shortId(value: string): string {
   return `#${value.slice(0, 8).toUpperCase()}`;
 }
@@ -76,6 +70,7 @@ export default function VentasTableClient({ initialData }: { initialData: AdminO
   const [to, setTo] = useState("");
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<AdminOrder | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -86,7 +81,7 @@ export default function VentasTableClient({ initialData }: { initialData: AdminO
       });
     }, 300);
     return () => window.clearTimeout(timer);
-  }, [search, status, datePreset, from, to, page]);
+  }, [search, status, datePreset, from, to, page, refreshKey]);
 
   function changeFilter<T>(setter: (value: T) => void, value: T) {
     setPage(1);
@@ -109,7 +104,10 @@ export default function VentasTableClient({ initialData }: { initialData: AdminO
           <h1 className="mt-2 text-[28px] font-bold text-[var(--text-primary)]">Ventas y pedidos</h1>
           <p className="mt-1 text-[14px] text-[var(--text-secondary)]">Control de pagos, despachos y entregas.</p>
         </div>
-        <p className="text-[13px] text-[var(--text-tertiary)]">{data.total} pedidos registrados</p>
+        <div className="flex items-center gap-2">
+          <p className="text-[13px] text-[var(--text-tertiary)]">{data.total} pedidos registrados</p>
+          <button type="button" onClick={() => setRefreshKey((key) => key + 1)} title="Refrescar lista" aria-label="Refrescar lista" className="btn-secondary !px-3 !py-2 text-[13px] disabled:opacity-40" disabled={isPending}>↻</button>
+        </div>
       </div>
 
       <div className="mb-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
