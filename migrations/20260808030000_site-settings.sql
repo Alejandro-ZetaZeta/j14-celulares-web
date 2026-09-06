@@ -9,7 +9,8 @@ INSERT INTO site_settings (key, value)
 VALUES
   ('tax_rate', '15'),
   ('whatsapp_number', '593960507959'),
-  ('hero_content', '{"eyebrow":{"text":"Catálogo actualizado","visible":true},"headline":{"text":"Tu próximo smartphone, aquí.","visible":true},"description":{"text":"Android e iPhone — sellados y Open Box — con stock en tiempo real y servicio técnico transparente.","visible":true},"primaryButton":{"text":"Ver Catálogo","href":"/catalogo","visible":true},"secondaryButton":{"text":"Consultar mi Reparación","href":"/servicio-tecnico","visible":true}}')
+  ('hero_content', '{"eyebrow":{"text":"Catálogo actualizado","visible":true},"headline":{"text":"Tu próximo smartphone, aquí.","visible":true},"description":{"text":"Android e iPhone — sellados y Open Box — con stock en tiempo real y servicio técnico transparente.","visible":true},"primaryButton":{"text":"Ver Catálogo","href":"/catalogo","visible":true},"secondaryButton":{"text":"Consultar mi Reparación","href":"/servicio-tecnico","visible":true}}'),
+  ('how_it_works', '[{"id":"deliver","title":"Entrega tu equipo","description":"Trae tu dispositivo a nuestro local. El técnico lo ingresa al sistema y te entregamos un número de ticket único.","visible":true},{"id":"track","title":"Seguimiento en tiempo real","description":"Ingresa tu número de ticket aquí y ve el estado actualizado por el técnico en cada etapa.","visible":true},{"id":"collect","title":"Recoge tu equipo","description":"Cuando el estado cambie a \\"Listo para Entrega\\", visítanos para recoger tu dispositivo reparado.","visible":true}]')
 ON CONFLICT (key) DO NOTHING;
 
 ALTER TABLE site_settings ENABLE ROW LEVEL SECURITY;

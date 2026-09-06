@@ -6,19 +6,11 @@ Copy `.env.example` to `.env.local` and fill in the InsForge URL and anon key. K
 
 InsForge sends signup verification emails through its configured auth email provider. SMTP credentials do not belong in this app. The signup flow sends the built-in 6-digit OTP, and `/cliente/verificar-otp` verifies it with `auth.verifyEmail()`.
 
-## PagoPlux Sandbox
+## Dataweb Sandbox
 
-PagoPlux resolves the sandbox merchant from `PayboxRemail`. It must be a valid sandbox establishment email; `sandbox_establishment@pagoplux.com` is not valid and causes the “Missing Paybox parameters, enter the merchant name” error.
+Checkout usa Dataweb/Datafast COPYandPAY. Configura `DATAWEB_ENTITY_ID`, `DATAWEB_AUTH_TOKEN`, `DATAWEB_MID` y `DATAWEB_TID` en `.env.local`. Sandbox usa `DATAWEB_ENVIRONMENT=sandbox`; producción usa `DATAWEB_BASE_URL=https://eu-prod.oppwa.com` y `DATAWEB_ENVIRONMENT=production`.
 
-Required local values in `.env.local`:
-
-```env
-NEXT_PUBLIC_PAGOPLUX_RUC=1727063198002
-NEXT_PUBLIC_PAGOPLUX_STORE_NAME=Jhordy Tests
-NEXT_PUBLIC_PAGOPLUX_MERCHANT_EMAIL=jaguas@plux.ec
-```
-
-Restart Next.js after changing environment variables. The integration loads PagoPlux Paybox from HTTPS, so HTTP localhost is not the root cause of the merchant error. For safer iframe and browser-cookie behavior, run local checkout over HTTPS:
+Restart Next.js after changing environment variables. For safer iframe and browser-cookie behavior, run local checkout over HTTPS:
 
 ```bash
 npm run dev:https
@@ -26,34 +18,15 @@ npm run dev:https
 
 Open `https://localhost:3000` and accept Next.js self-signed certificate warning. If using HTTPS for auth redirects too, set `NEXT_PUBLIC_APP_URL=https://localhost:3000` in `.env.local` and restart the server. No deployment is required.
 
-PagoPlux integration files:
+Dataweb integration files:
 
-- `src/lib/pagoplux.ts`: Paybox script, sandbox payload, modal, callbacks.
-- `src/types/pagoplux.d.ts`: Paybox payload and browser-global types.
 - `src/app/(public)/checkout/CheckoutClient.tsx`: customer data and checkout trigger.
-- `src/app/api/payments/pagoplux-callback/route.ts`: validates approved responses and creates orders.
-- `migrations/20260805120000_create-orders.sql`: order fields for PagoPlux transaction ID and response payload.
+- `src/app/api/payments/payment-callback/route.ts`: validates approved responses and creates orders.
+- `migrations/20260828000000_remove-pagoplux.sql`: removes legacy PagoPlux data and schema.
 - `.env.example`: documented sandbox configuration template.
 - `.env.local`: active local sandbox configuration; ignored by Git.
 
-### PagoPlux initialization contract
-
-Do not move PagoPlux SDK loading back into the payment click handler or remove
-the `preloadPaybox()` call from checkout. The SDK loads its environment
-asynchronously, creates `#pay` and `#iframePaybox` later, and binds the
-`#pay` click listener from its `window` `load` handler. The integration must:
-
-1. Preload SDK, modal, and iframe when checkout mounts.
-2. Replay `load` after `#pay` and `#iframePaybox` exist so SDK attaches its click listener.
-3. Reuse preloaded modal/iframe when opening payment.
-4. Keep fallback initialization and timeout recovery enabled.
-
-Without this sequence, first payment click can initialize PagoPlux without
-opening the modal; second click then appears to fix it.
-
-Sandbox may log Kount/Kaptcha CORS errors from `tst.kaptcha.com`. Those
-requests originate inside PagoPlux and are not controlled by this app. Treat
-them as a separate vendor issue unless they prevent the iframe from loading.
+Sandbox may log Kount/Kaptcha CORS errors from `tst.kaptcha.com`. Those requests originate inside Dataweb and are not controlled by this app. Treat them as a separate vendor issue unless they prevent the iframe from loading.
 
 ## Getting Started
 

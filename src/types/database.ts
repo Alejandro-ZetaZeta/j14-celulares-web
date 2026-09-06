@@ -178,11 +178,12 @@ export interface Order {
   promotion_code: string | null;
   status: OrderStatus;
   payment_method: string;
+  payment_provider: string;
+  payment_transaction_id: string | null;
+  payment_response_payload: Record<string, unknown> | null;
   tracking_number: string | null;
   internal_notes: string | null;
   delivery_observations: string | null;
-  pagoplux_transaction_id: string | null;
-  pagoplux_response_payload: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
 }

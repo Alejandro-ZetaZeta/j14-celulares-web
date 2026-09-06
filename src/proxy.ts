@@ -99,7 +99,8 @@ export async function proxy(request: NextRequest) {
 
   if (isAdminRoute && !isAdminLogin) {
     if (role === "client") return redirect("/cliente/dashboard");
-    if (role === "technician" && !pathname.startsWith("/admin/servicio-tecnico")) {
+    const isServiceContentRoute = pathname.startsWith("/admin/servicio-tecnico/configuracion");
+    if (role === "technician" && !pathname.startsWith("/admin/servicio-tecnico") && !isServiceContentRoute) {
       return redirect("/admin/servicio-tecnico");
     }
     if (!role) return redirect("/admin/login");

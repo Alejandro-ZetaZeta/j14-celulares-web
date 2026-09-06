@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { CreditCardRate } from "@/types/database";
+import { roundCents } from "@/lib/cart";
 
 const IVA_RATE = 0.15;
 
@@ -39,7 +40,7 @@ export default function FinancingSimulator({
 
   const installment = useMemo(() => {
     if (!selectedRate || price <= 0) return null;
-    return (price * (1 + IVA_RATE) * selectedRate.interest_multiplier) / selectedRate.months;
+    return roundCents((price * (1 + IVA_RATE) * selectedRate.interest_multiplier) / selectedRate.months);
   }, [selectedRate, price]);
 
   useEffect(() => {

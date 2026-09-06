@@ -1,3 +1,13 @@
+export interface GiftItem {
+  productId: string;
+  variantId: string;
+  brand: string;
+  model: string;
+  capacity: string;
+  color: string;
+  quantity: number;
+}
+
 export interface CartItem {
   variantId: string;
   productId: string;
@@ -9,8 +19,7 @@ export interface CartItem {
   imageUrl: string | null;
   quantity: number;
   stock: number;
-  isGift?: boolean;
-  giftForProductId?: string;
+  gifts: GiftItem[];
 }
 
 export interface CartTotals {
