@@ -44,7 +44,7 @@ const datePresets: Array<{ value: NonNullable<AdminOrderFilters["datePreset"]>; 
 ];
 
 function shortId(value: string): string {
-  return `#${value.slice(0, 8).toUpperCase()}`;
+  return `#${value}`;
 }
 
 function StatusBadge({ status }: { status: OrderStatus }) {

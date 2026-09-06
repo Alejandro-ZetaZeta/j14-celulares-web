@@ -5,6 +5,16 @@ import { getAllProducts } from "@/lib/actions/admin-products";
 import { getAllTickets } from "@/lib/actions/admin-service";
 import type { ProductWithVariants, TechnicalService } from "@/types/database";
 import AdminPanelSkeleton from "./AdminPanelSkeleton";
+import {
+  IconCheckCircle,
+  IconLayers,
+  IconPackage,
+  IconPlus,
+  IconShipmentCheck,
+  IconTicket,
+  IconWarning,
+  IconWrench,
+} from "./SidebarIcons";
 
 async function DashboardContent() {
   await requireAdmin();
@@ -27,12 +37,12 @@ async function DashboardContent() {
   const deliveredTickets = typedTickets.filter((ticket) => ticket.status === "delivered").length;
 
   const stats = [
-    { label: "Productos", value: typedProducts.length, icon: "📦", href: "/admin/productos", color: "var(--accent)" },
-    { label: "Variantes", value: totalVariants, icon: "🗂", href: "/admin/productos", color: "#5E5CE6" },
-    { label: "Stock Bajo", value: lowStock, icon: "⚠️", href: "/admin/productos", color: "var(--status-amber)" },
-    { label: "Tickets Abiertos", value: openTickets, icon: "🔧", href: "/admin/servicio-tecnico", color: "#FF6B35" },
-    { label: "Listos p/ Entrega", value: readyTickets, icon: "✅", href: "/admin/servicio-tecnico", color: "var(--status-green)" },
-    { label: "Entregados", value: deliveredTickets, icon: "📦", href: "/admin/servicio-tecnico", color: "#8E8CF7" },
+    { label: "Productos", value: typedProducts.length, icon: IconPackage, href: "/admin/productos", color: "var(--accent)" },
+    { label: "Variantes", value: totalVariants, icon: IconLayers, href: "/admin/productos", color: "#5E5CE6" },
+    { label: "Stock Bajo", value: lowStock, icon: IconWarning, href: "/admin/productos", color: "var(--status-amber)" },
+    { label: "Tickets Abiertos", value: openTickets, icon: IconWrench, href: "/admin/servicio-tecnico", color: "#FF6B35" },
+    { label: "Listos p/ Entrega", value: readyTickets, icon: IconCheckCircle, href: "/admin/servicio-tecnico", color: "var(--status-green)" },
+    { label: "Entregados", value: deliveredTickets, icon: IconShipmentCheck, href: "/admin/servicio-tecnico", color: "#8E8CF7" },
   ];
 
   return (
@@ -51,7 +61,9 @@ async function DashboardContent() {
             id={`dashboard-stat-${stat.label.toLowerCase().replace(/\s+/g, "-")}`}
             className="card-apple p-5 hover:!transform-none hover:!shadow-[var(--shadow-md)] group"
           >
-            <div className="text-2xl mb-3">{stat.icon}</div>
+            <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-[var(--radius-sm)] bg-white/70" style={{ color: stat.color }}>
+              {stat.icon({ className: "h-6 w-6" })}
+            </div>
             <p
               className="text-[32px] font-bold leading-none mb-1"
               style={{ color: stat.color }}
@@ -73,7 +85,7 @@ async function DashboardContent() {
           id="dashboard-quick-new-product"
           className="flex items-center gap-4 p-5 card-apple hover:!transform-none hover:border-[var(--accent)] transition-all"
         >
-          <div className="w-10 h-10 rounded-full bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)] font-bold text-[18px]">+</div>
+          <div className="w-10 h-10 rounded-full bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)]"><IconPlus className="h-5 w-5" /></div>
           <div>
             <p className="font-semibold text-[var(--text-primary)]">Nuevo Producto</p>
             <p className="text-caption">Agregar un celular al catálogo</p>
@@ -85,7 +97,7 @@ async function DashboardContent() {
           id="dashboard-quick-new-ticket"
           className="flex items-center gap-4 p-5 card-apple hover:!transform-none hover:border-[var(--accent)] transition-all"
         >
-          <div className="w-10 h-10 rounded-full bg-[#FF6B35]/10 flex items-center justify-center text-[20px]">🎫</div>
+          <div className="w-10 h-10 rounded-full bg-[#FF6B35]/10 flex items-center justify-center text-[#FF6B35]"><IconTicket className="h-5 w-5" /></div>
           <div>
             <p className="font-semibold text-[var(--text-primary)]">Nuevo Ticket</p>
             <p className="text-caption">Registrar un equipo para reparación</p>

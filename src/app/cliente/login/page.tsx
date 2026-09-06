@@ -31,7 +31,13 @@ function ClientLoginContent() {
       setError(result.error?.message ?? "No pudimos iniciar sesión.");
       return;
     }
-     router.replace(result.role === "client" ? "/cliente/dashboard" : "/admin/servicio-tecnico");
+     const home =
+      result.role === "client"
+        ? "/cliente/dashboard"
+        : result.role === "technician"
+          ? "/admin/servicio-tecnico"
+          : "/admin";
+    router.replace(home);
     router.refresh();
   }
 

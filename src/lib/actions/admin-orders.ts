@@ -2,6 +2,7 @@
 
 import { revalidatePath, updateTag } from "next/cache";
 import { getAdminDatabase } from "@/lib/insforge-server";
+import { roundCents } from "@/lib/cart";
 import type {
   AdminOrder,
   AdminOrderDetail,
@@ -83,8 +84,8 @@ function safeIlike(value: string): string {
   return value.replace(/[,%()]/g, " ");
 }
 
-function isUuid(value: string): boolean {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+function isOrderId(value: string): boolean {
+  return /^J14-[0-9a-f]{10}$/i.test(value);
 }
 
 function dateRange(filters: AdminOrderFilters): { from: string | null; to: string | null } {
@@ -161,7 +162,7 @@ function applyOrderFilters<T extends {
   let next = query;
   if (filters.status && filters.status !== "ALL") next = next.eq("status", filters.status);
   if (customerIds.length) next = next.in("customer_id", customerIds);
-  if (search && isUuid(search)) next = next.eq("id", search);
+  if (search && isOrderId(search)) next = next.eq("id", search);
   const range = dateRange(filters);
   if (range.from) next = next.gte("created_at", range.from);
   if (range.to) next = next.lt("created_at", range.to);
@@ -173,9 +174,9 @@ export async function getAdminOrders(filters: AdminOrderFilters = {}): Promise<A
   const page = Math.max(1, Math.floor(filters.page ?? 1));
   const pageSize = Math.min(50, Math.max(5, Math.floor(filters.pageSize ?? 15)));
   const search = normalizeSearch(filters.search);
-  const customerIds = search && !isUuid(search) ? await findCustomerIds(db, search) : [];
+  const customerIds = search && !isOrderId(search) ? await findCustomerIds(db, search) : [];
 
-  if (search && !isUuid(search) && customerIds.length === 0) {
+  if (search && !isOrderId(search) && customerIds.length === 0) {
     return { orders: [], metrics: await getMetrics(db), page, pageSize, total: 0, totalPages: 0 };
   }
 
@@ -204,7 +205,7 @@ async function getMetrics(db: Awaited<ReturnType<typeof getAdminDatabase>>): Pro
   if (error) throw new Error(error.message);
   const orders = data as Array<Pick<Order, "status" | "total_amount">>;
   const paid = orders.filter((order) => PAID_STATUSES.includes(order.status));
-  const revenue = paid.reduce((sum, order) => sum + asNumber(order.total_amount), 0);
+  const revenue = roundCents(paid.reduce((sum, order) => sum + asNumber(order.total_amount), 0));
   return {
     revenue,
     sales: orders.length,
@@ -215,7 +216,7 @@ async function getMetrics(db: Awaited<ReturnType<typeof getAdminDatabase>>): Pro
 
 export async function getAdminOrderDetail(orderId: string): Promise<AdminOrderDetail | null> {
   const db = await getAdminDatabase();
-  if (!isUuid(orderId)) return null;
+  if (!isOrderId(orderId)) return null;
 
   const { data, error } = await db
     .from("orders")
@@ -241,7 +242,7 @@ export async function updateOrderStatus(
   updates: Pick<Order, "tracking_number" | "internal_notes" | "delivery_observations">,
 ): Promise<AdminOrderDetail> {
   const db = await getAdminDatabase();
-  if (!isUuid(orderId)) throw new Error("Orden inválida.");
+  if (!isOrderId(orderId)) throw new Error("Orden inválida.");
 
   const { data: current, error: currentError } = await db.from("orders").select("status").eq("id", orderId).single();
   if (currentError || !current) throw new Error("Orden no encontrada.");

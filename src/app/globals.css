@@ -537,6 +537,9 @@ body {
 .admin-sidebar__nav-group.has-submenu {
   position: relative;
   border-radius: var(--radius-sm);
+}
+
+.admin-sidebar__nav-group.has-submenu.is-active {
   background: linear-gradient(90deg, rgba(255,255,255,.035), transparent 90%);
 }
 
@@ -628,11 +631,27 @@ body {
 }
 
 .admin-sidebar.is-collapsed .admin-sidebar__nav-link,
-.admin-sidebar.is-collapsed .admin-sidebar__footer-link { justify-content: center; }
+.admin-sidebar.is-collapsed .admin-sidebar__footer-link {
+  justify-content: center;
+  gap: 0;
+  padding-inline: .5rem;
+}
 
 .admin-sidebar.is-collapsed .admin-sidebar__submenu { display: none; }
 
 .admin-sidebar__icon { width: 1.25rem; flex: 0 0 1.25rem; text-align: center; }
+
+.admin-sidebar__icon-svg {
+  width: 1.15rem;
+  height: 1.15rem;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.admin-sidebar__submenu-link .admin-sidebar__icon-svg {
+  width: .95rem;
+  height: .95rem;
+}
 
 @keyframes admin-nav-arrive {
   from { opacity: 0; transform: scaleY(0); }
@@ -773,3 +792,11 @@ select:focus-visible {
 
 /* ── Selection ─────────────────────────────────────────────── */
 ::selection { background: var(--accent-light); color: var(--accent); }
+
+/* ── Print: only the active print area is rendered ────────── */
+@media print {
+  body * { visibility: hidden; }
+  #print-area, #print-area * { visibility: visible; }
+  #print-area { position: absolute; left: 0; top: 0; width: 100%; }
+  @page { margin: 12mm; }
+}
