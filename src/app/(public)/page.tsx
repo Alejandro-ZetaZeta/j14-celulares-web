@@ -185,7 +185,6 @@ export default async function HomePage() {
       <section className="section-dark section-padding">
         <div className="container-apple text-center">
           <AnimatedSection>
-            <span className="text-4xl mb-6 block">🔧</span>
             <h2 className="text-headline text-white mb-4">
               ¿Tu equipo está en reparación?
             </h2>

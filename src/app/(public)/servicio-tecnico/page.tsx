@@ -18,20 +18,27 @@ export default async function ServicioTecnicoPage() {
       <div className="section-black relative overflow-hidden py-16">
         {/* Mobile-only backdrop: protagonista a baja opacidad detrás del texto */}
         <div aria-hidden="true" className="absolute inset-0 pointer-events-none lg:hidden">
-          <Image
+          <img
             src="/protaServicioTec.png"
             alt=""
-            fill
-            priority
-            className="object-contain object-bottom opacity-15 select-none"
-            sizes="100vw"
+            className="w-full h-full object-contain object-bottom opacity-15 select-none"
           />
         </div>
 
         <div className="container-apple relative z-10">
-          <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[1fr_1.1fr] lg:gap-14">
-            {/* Desktop: imagen a la izquierda, adaptada a la altura vertical */}
-            <AnimatedSection className="hidden lg:flex justify-center order-first">
+          <div className="grid grid-cols-1 items-center lg:grid-cols-[1fr_auto] lg:gap-10">
+            {/* Contenido centrado horizontalmente en su columna */}
+            <AnimatedSection className="text-center">
+              <h1 className="text-display text-white mb-4">
+                Seguimiento de Reparación
+              </h1>
+              <p className="text-body-lg text-[#A1A1A6] max-w-[440px] mx-auto">
+                Ingresa tu número de ticket para ver el estado actual de tu equipo en tiempo real.
+              </p>
+            </AnimatedSection>
+
+            {/* Desktop: imagen al lado derecho */}
+            <AnimatedSection className="hidden lg:block justify-self-end">
               <Image
                 src="/protaServicioTec.png"
                 alt="Técnico de J14 Celulares"
@@ -40,17 +47,6 @@ export default async function ServicioTecnicoPage() {
                 priority
                 className="h-[24rem] w-auto object-contain drop-shadow-2xl select-none"
               />
-            </AnimatedSection>
-
-            {/* Contenido centrado */}
-            <AnimatedSection className="text-center lg:text-left">
-              <span className="text-5xl mb-6 block" aria-hidden="true">🔧</span>
-              <h1 className="text-display text-white mb-4">
-                Seguimiento de Reparación
-              </h1>
-              <p className="text-body-lg text-[#A1A1A6] max-w-[440px] mx-auto lg:mx-0">
-                Ingresa tu número de ticket para ver el estado actual de tu equipo en tiempo real.
-              </p>
             </AnimatedSection>
           </div>
         </div>
