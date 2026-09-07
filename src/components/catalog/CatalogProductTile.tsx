@@ -27,7 +27,7 @@ export default function CatalogProductTile({ product }: { product: ProductWithVa
           <h2 className="mt-1 min-h-[2.75rem] text-[15px] font-semibold leading-5 text-[var(--text-primary)]">{product.model}</h2>
           <div className="mt-3 flex items-end justify-between gap-2">
             <div><p className="text-[11px] text-[var(--text-tertiary)]">Desde</p><p className="text-[18px] font-semibold tracking-[-0.02em] text-[var(--text-primary)]">${price(product).toLocaleString("en-US")}</p></div>
-            {isOpenBox ? <span className="catalog-badge">Open Box</span> : product.type === "sealed_iphone" ? <span className="catalog-badge">Sellado</span> : <span className="catalog-badge">Android</span>}
+            {isOpenBox ? <span className="catalog-badge">Open Box</span> : product.type === "sealed_iphone" ? <span className="catalog-badge">Sellado</span> : product.type === "android" ? <span className="catalog-badge">Android</span> : <span className="catalog-badge">{product.type}</span>}
           </div>
         </div>
       </Link>
