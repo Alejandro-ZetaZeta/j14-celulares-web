@@ -24,7 +24,7 @@ export default function ClientDashboard({ profile, tickets, userId, unreadCounts
 
   async function logout() {
     await signOutAction();
-    router.replace("/cliente/login");
+    router.replace("/login");
     router.refresh();
   }
 

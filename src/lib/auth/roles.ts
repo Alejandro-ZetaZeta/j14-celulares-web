@@ -52,7 +52,7 @@ export async function getCurrentUserProfile(): Promise<UserProfile | null> {
 export async function requireRole(...allowed: AppRole[]): Promise<AppRole> {
   const role = await getCurrentUserRole();
   if (!role || !allowed.includes(role)) {
-    redirect("/admin/login");
+    redirect("/login");
   }
   return role;
 }
@@ -72,7 +72,7 @@ export async function requireClientOrAdmin(): Promise<"client" | "admin"> {
 export async function requireCompletedClient(): Promise<UserProfile> {
   const profile = await getCurrentUserProfile();
   if (!profile || !["client", "admin"].includes(profile.role)) {
-    redirect("/cliente/login");
+    redirect("/login");
   }
   if (profile.role === "client" && (!profile.is_profile_completed || !profile.date_of_birth)) {
     redirect("/cliente/completar-perfil");

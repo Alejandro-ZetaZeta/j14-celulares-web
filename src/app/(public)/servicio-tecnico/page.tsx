@@ -19,7 +19,7 @@ export default async function ServicioTecnicoPage() {
         {/* Mobile-only backdrop: protagonista a baja opacidad detrás del texto */}
         <div aria-hidden="true" className="absolute inset-0 pointer-events-none lg:hidden">
           <img
-            src="/protaServicioTec.png"
+            src="/ProtasTechService.png"
             alt=""
             className="w-full h-full object-contain object-bottom opacity-15 select-none"
           />
@@ -40,7 +40,7 @@ export default async function ServicioTecnicoPage() {
             {/* Desktop: imagen al lado derecho */}
             <AnimatedSection className="hidden lg:block justify-self-end">
               <Image
-                src="/protaServicioTec.png"
+                src="/ProtasTechService.png"
                 alt="Técnico de J14 Celulares"
                 width={480}
                 height={640}

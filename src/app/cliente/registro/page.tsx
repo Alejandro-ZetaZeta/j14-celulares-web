@@ -71,7 +71,7 @@ export default function ClientRegisterPage() {
            </ul>
            <button type="submit" disabled={loading || !isStrongPassword(password)} className="btn-primary mt-1 w-full justify-center disabled:opacity-50">{loading ? "Creando cuenta..." : "Crear cuenta"}</button>
         </form>
-        <p className="text-center text-[14px] text-[var(--text-secondary)]">¿Ya tienes cuenta? <Link href="/cliente/login" className="font-semibold text-[var(--accent)] hover:underline">Inicia sesión</Link></p>
+        <p className="text-center text-[14px] text-[var(--text-secondary)]">¿Ya tienes cuenta? <Link href="/login" className="font-semibold text-[var(--accent)] hover:underline">Inicia sesión</Link></p>
       </div>
     </ClientAuthShell>
   );

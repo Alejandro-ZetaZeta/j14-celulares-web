@@ -34,7 +34,7 @@ export default function RecoverPasswordPage() {
           <label className="flex flex-col gap-1.5 text-[13px] font-semibold">Correo electrónico<input required type="email" maxLength={254} autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} className="rounded-[11px] border border-[var(--border-strong)] px-4 py-3 text-[15px] outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20" /></label>
           <button type="submit" disabled={loading} className="btn-primary w-full justify-center disabled:opacity-50">{loading ? "Buscando cuenta..." : "Enviar código"}</button>
         </form>
-        <p className="text-center text-[14px] text-[var(--text-secondary)]"><Link href="/cliente/login" className="font-semibold text-[var(--accent)] hover:underline">Volver a iniciar sesión</Link></p>
+        <p className="text-center text-[14px] text-[var(--text-secondary)]"><Link href="/login" className="font-semibold text-[var(--accent)] hover:underline">Volver a iniciar sesión</Link></p>
       </div>
     </ClientAuthShell>
   );

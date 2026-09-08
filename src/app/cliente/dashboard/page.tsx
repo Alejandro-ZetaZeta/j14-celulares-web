@@ -11,7 +11,7 @@ async function ClientDashboardContent() {
   if (profile.role !== "client") redirect("/admin");
   const client = await createInsforgeServerClient();
   const { data: userData } = await client.auth.getCurrentUser();
-  if (!userData?.user) redirect("/cliente/login");
+  if (!userData?.user) redirect("/login");
   const [tickets, currentProfile] = await Promise.all([getClientTickets(), getCurrentUserProfile()]);
   const unreadCounts = await getUnreadTicketMessageCounts(tickets.map((ticket) => ticket.id));
   return <ClientDashboard profile={{ full_name: currentProfile?.full_name ?? null, phone: currentProfile?.phone ?? null }} tickets={tickets} userId={userData.user.id} unreadCounts={unreadCounts} />;

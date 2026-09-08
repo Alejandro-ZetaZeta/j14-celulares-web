@@ -5,7 +5,7 @@ import { createAuthActions } from "@insforge/sdk/ssr";
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("insforge_code");
   const oauthError = request.nextUrl.searchParams.get("error");
-  const failure = new URL("/cliente/login", request.url);
+  const failure = new URL("/login", request.url);
 
   if (oauthError || !code) {
     failure.searchParams.set("error", "oauth_failed");

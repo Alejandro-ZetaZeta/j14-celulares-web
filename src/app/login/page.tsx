@@ -8,7 +8,7 @@ import ClientAuthShell from "@/components/client/ClientAuthShell";
 import PasswordVisibilityButton from "@/components/client/PasswordVisibilityButton";
 import { initiateClientGoogleAction, signInClientAction } from "@/lib/actions/auth";
 
-function ClientLoginContent() {
+function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
@@ -31,7 +31,7 @@ function ClientLoginContent() {
       setError(result.error?.message ?? "No pudimos iniciar sesión.");
       return;
     }
-     const home =
+    const home =
       result.role === "client"
         ? "/cliente/dashboard"
         : result.role === "technician"
@@ -72,6 +72,6 @@ function ClientLoginContent() {
   );
 }
 
-export default function ClientLoginPage() {
-  return <Suspense fallback={<div className="min-h-screen bg-[var(--bg-secondary)] p-8 text-[var(--text-tertiary)]">Cargando inicio de sesión...</div>}><ClientLoginContent /></Suspense>;
+export default function LoginPage() {
+  return <Suspense fallback={<div className="min-h-screen bg-[var(--bg-secondary)] p-8 text-[var(--text-tertiary)]">Cargando inicio de sesión...</div>}><LoginContent /></Suspense>;
 }

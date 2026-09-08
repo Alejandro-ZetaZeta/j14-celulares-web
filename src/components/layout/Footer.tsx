@@ -88,7 +88,7 @@ export default function Footer() {
             Copyright &copy; {year} J14 Celulares. Todos los derechos reservados.
           </p>
           <Link
-            href="/admin/login"
+            href="/login"
             className="text-[12px] text-[var(--text-tertiary)] hover:text-[var(--accent)] transition-colors duration-150"
           >
             Acceso Administrador

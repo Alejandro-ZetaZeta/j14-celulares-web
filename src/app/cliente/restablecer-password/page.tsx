@@ -82,7 +82,7 @@ function ResetPasswordContent() {
       setError(result.error.message);
       return;
     }
-    router.replace("/cliente/login?reset=success");
+    router.replace("/login?reset=success");
   }
 
   return (

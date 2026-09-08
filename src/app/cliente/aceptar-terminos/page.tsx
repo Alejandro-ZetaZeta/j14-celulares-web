@@ -5,7 +5,7 @@ import AcceptTermsClient from "./AcceptTermsClient";
 
 async function AcceptTermsContent() {
   const profile = await getCurrentUserProfile();
-  if (!profile) redirect("/cliente/login");
+  if (!profile) redirect("/login");
   if (profile.role !== "client") redirect("/admin/servicio-tecnico");
   if (profile.terms_accepted_at) redirect("/cliente/completar-perfil");
 

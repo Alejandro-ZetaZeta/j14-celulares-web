@@ -53,20 +53,32 @@ export async function proxy(request: NextRequest) {
 
   const isAdminRoute = pathname.startsWith("/admin");
   const isClientRoute = pathname.startsWith("/cliente");
-  const isAdminLogin = pathname === "/admin/login";
-  const isClientPublic = ["/cliente/login", "/cliente/registro", "/cliente/verificar-otp", "/cliente/recuperar-password", "/cliente/restablecer-password"].includes(pathname);
+  const isClientPublic = ["/cliente/registro", "/cliente/verificar-otp", "/cliente/recuperar-password", "/cliente/restablecer-password"].includes(pathname);
   const isTermsAcceptanceRoute = pathname === "/cliente/aceptar-terminos";
 
-  if ((!isAdminRoute || isAdminLogin) && (!isClientRoute || isClientPublic)) {
+  // Legacy login paths were consolidated into a single /login page.
+  if (pathname === "/admin/login" || pathname === "/cliente/login") {
+    return redirect("/login");
+  }
+
+  if (!isAdminRoute && !isClientRoute) {
+    return response;
+  }
+
+  if (isClientPublic) {
     return response;
   }
 
   const accessToken = session.accessToken ?? request.cookies.get("insforge_access_token")?.value;
 
-  if (!accessToken) {
-    const loginUrl = new URL(isClientRoute ? "/cliente/login" : "/admin/login", request.url);
+  function loginRedirect() {
+    const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("from", pathname);
     return redirect(loginUrl.pathname + loginUrl.search);
+  }
+
+  if (!accessToken) {
+    return loginRedirect();
   }
 
   const client = createServerClient({
@@ -74,9 +86,7 @@ export async function proxy(request: NextRequest) {
   });
   const { data: authData } = await client.auth.getCurrentUser();
   if (!authData?.user) {
-    const loginUrl = new URL(isClientRoute ? "/cliente/login" : "/admin/login", request.url);
-    loginUrl.searchParams.set("from", pathname);
-    return redirect(loginUrl.pathname + loginUrl.search);
+    return loginRedirect();
   }
 
   const { data: profile } = await client.database
@@ -88,7 +98,7 @@ export async function proxy(request: NextRequest) {
 
   if (isClientRoute) {
     if (role === "technician") return redirect("/admin/servicio-tecnico");
-    if (role !== "client" && role !== "admin") return redirect("/cliente/login");
+    if (role !== "client" && role !== "admin") return redirect("/login");
     if (role === "client" && (!profile?.is_profile_completed || !profile?.date_of_birth) && pathname !== "/cliente/completar-perfil" && !isTermsAcceptanceRoute) {
       return redirect("/cliente/completar-perfil");
     }
@@ -97,13 +107,13 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  if (isAdminRoute && !isAdminLogin) {
+  if (isAdminRoute) {
     if (role === "client") return redirect("/cliente/dashboard");
     const isServiceContentRoute = pathname.startsWith("/admin/servicio-tecnico/configuracion");
     if (role === "technician" && !pathname.startsWith("/admin/servicio-tecnico") && !isServiceContentRoute) {
       return redirect("/admin/servicio-tecnico");
     }
-    if (!role) return redirect("/admin/login");
+    if (!role) return redirect("/login");
   }
 
   return response;

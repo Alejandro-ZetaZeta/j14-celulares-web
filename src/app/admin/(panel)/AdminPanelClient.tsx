@@ -52,7 +52,7 @@ export default function AdminPanelClient({ role, children }: AdminPanelClientPro
 
   async function handleLogout() {
     await signOutAction();
-    router.replace("/admin/login");
+    router.replace("/login");
     router.refresh();
   }
 
