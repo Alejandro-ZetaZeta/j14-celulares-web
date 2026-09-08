@@ -680,6 +680,50 @@ body {
   50%       { box-shadow: 0 0 0 6px rgba(255, 159, 10, 0); }
 }
 
+/* ── Editorial Display (Nosotros) ─────────────────────────── */
+.font-display {
+  font-family: "Fraunces", "Inter", Georgia, serif;
+}
+
+.text-editorial {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  text-wrap: balance;
+}
+
+.drop-cap::first-letter {
+  float: left;
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 3.4em;
+  font-weight: 600;
+  line-height: 0.82;
+  padding-right: 0.14em;
+  padding-top: 0.04em;
+  color: var(--accent);
+}
+
+.about-timeline {
+  position: relative;
+}
+
+.about-timeline::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 1.25rem;
+  width: 1px;
+  background: linear-gradient(180deg, var(--accent) 0%, var(--border-strong) 12%, var(--border-strong) 88%, transparent 100%);
+  content: "";
+}
+
+@media (min-width: 768px) {
+  .about-timeline::before {
+    left: 50%;
+  }
+}
+
 /* ── Focus Styles ──────────────────────────────────────────── */
 :focus-visible {
   outline: 2px solid var(--accent);

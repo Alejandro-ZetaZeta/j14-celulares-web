@@ -18,6 +18,12 @@ const footerLinks = [
     ],
   },
   {
+    heading: "Nosotros",
+    links: [
+      { href: "/nosotros", label: "Nuestra historia" },
+    ],
+  },
+  {
     heading: "Legal",
     links: [
       { href: "/terminos", label: "Términos y Condiciones" },
@@ -36,7 +42,7 @@ export default function Footer() {
     <footer className="bg-[var(--bg-secondary)] border-t border-[var(--border)] mt-auto">
       <div className="container-apple pt-20 pb-12">
         {/* Top grid */}
-        <div className="grid grid-cols-1 gap-10 border-b border-[var(--border)] pb-10 md:grid-cols-4">
+        <div className="grid grid-cols-1 gap-10 border-b border-[var(--border)] pb-10 sm:grid-cols-2 lg:grid-cols-5">
           {/* Brand */}
           <div>
             <div className="flex items-center gap-2 mb-3">

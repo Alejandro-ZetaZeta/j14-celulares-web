@@ -69,7 +69,7 @@ export default function TicketTableClient({
     setSaving(id);
     await markDelivered(id);
     setTickets((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, status: "delivered", progressing: false } : t))
+      prev.map((t) => (t.id === id ? { ...t, status: "delivered", progressing: false, current_details: "" } : t))
     );
     setSaving(null);
   }

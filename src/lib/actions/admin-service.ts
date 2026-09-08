@@ -130,7 +130,7 @@ export async function markDelivered(id: string) {
 
   const { data, error } = await db
     .from("technical_service")
-    .update({ status: "delivered", progressing: false })
+    .update({ status: "delivered", progressing: false, current_details: "" })
     .eq("id", id)
     .select("ticket_id")
     .single();

@@ -26,7 +26,7 @@ const allSidebarLinks = [
   { href: "/admin/colecciones", label: "Colecciones", icon: IconLayers, roles: ["admin"] as AppRole[] },
   { href: "/admin/promociones", label: "Promociones", icon: IconPercent, roles: ["admin"] as AppRole[] },
   { href: "/admin/financiamiento", label: "Financiamiento", icon: IconCard, roles: ["admin"] as AppRole[] },
-  { href: "/admin/configuracion", label: "Configuración", icon: IconCog, roles: ["admin"] as AppRole[] },
+  { href: "/admin/configuracion", label: "Configuración", icon: IconCog, roles: ["admin"] as AppRole[], children: [{ href: "/admin/configuracion/nosotros", label: "Página Nosotros", icon: IconPen }] },
   { href: "/admin/ventas", label: "Ventas", icon: IconReceipt, roles: ["admin"] as AppRole[] },
   {
     href: "/admin/servicio-tecnico",

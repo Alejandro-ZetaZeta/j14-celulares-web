@@ -181,7 +181,7 @@ export default function TicketStatus({ initialTicket }: TicketStatusProps) {
                   )}
 
                   {/* Current details */}
-                  {isCurrent && ticket.current_details && (
+                  {isCurrent && !isDelivered && ticket.current_details && (
                     <AnimatePresence>
                       <motion.p
                         key={ticket.current_details}
