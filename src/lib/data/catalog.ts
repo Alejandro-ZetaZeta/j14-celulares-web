@@ -171,3 +171,13 @@ export async function getFeaturedProducts(): Promise<ProductWithVariants[]> {
     .sort((a, b) => a.featured_order - b.featured_order)
     .slice(0, 6);
 }
+
+/**
+ * Fetch products whose type is a phone case / "Funda" (case-insensitive).
+ * Reuses the cached `getProducts` query — no extra round-trip.
+ * Cached with the `products` tag — invalidated when any product changes.
+ */
+export async function getFundaProducts(): Promise<ProductWithVariants[]> {
+  const products = await getProducts();
+  return products.filter((p) => p.type.toLowerCase().includes("funda"));
+}

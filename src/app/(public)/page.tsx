@@ -1,15 +1,15 @@
 import Link from "next/link";
 import Image from "next/image";
 import AnimatedSection from "@/components/ui/AnimatedSection";
-import { getCatalogCollections, getFeaturedProducts } from "@/lib/data/catalog";
+import { getFeaturedProducts, getFundaProducts } from "@/lib/data/catalog";
+import FundaConveyor from "@/components/catalog/FundaConveyor";
 import { getSiteSettings } from "@/lib/site-settings";
 
 // No revalidate = 60 here — caching is handled by `use cache` + cacheTag
 // in the data layer. Revalidates only when an admin mutates data.
 
 export default async function HomePage() {
-  const [featuredSlice, collections, settings] = await Promise.all([getFeaturedProducts(), getCatalogCollections(), getSiteSettings()]);
-  const homeCollections = collections.filter((collection) => collection.show_on_home);
+  const [featuredSlice, settings, fundas] = await Promise.all([getFeaturedProducts(), getSiteSettings(), getFundaProducts()]);
   const hero = settings.hero;
 
   return (
@@ -111,32 +111,12 @@ export default async function HomePage() {
               Encuentra lo que buscas.
             </h2>
             <p className="mx-auto -mt-8 mb-10 max-w-xl text-center text-body text-[var(--text-secondary)]">
-              Explora por tipo de equipo, condición o colección. Estas categorías se administran desde el panel.
+              Explora por toda nuestra colección.
             </p>
           </AnimatedSection>
-
-          {homeCollections.length > 0 ? <div className="grid grid-cols-1 gap-5 sm:relative sm:left-1/2 sm:w-screen sm:-translate-x-1/2 sm:px-5 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)_minmax(0,1fr)]">
-            {homeCollections.map((collection, i) => {
-              const gradients = ["from-[#1C1C1E] to-[#2C2C2E]", "from-[#0071E3] to-[#00457C]", "from-[#30D158] to-[#248A3D]"];
-              return (
-              <AnimatedSection key={collection.id} delay={i * 0.1}>
-                <Link
-                  href={`/catalogo?coleccion=${collection.slug}`}
-                  id={`cat-${collection.slug}`}
-                  className={`group block rounded-[var(--radius-xl)] bg-gradient-to-br ${gradients[i % gradients.length]} p-7 text-white transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl`}
-                >
-                  <span className="mb-4 block text-4xl" aria-hidden="true">{collection.label.slice(0, 1)}</span>
-                  <h3 className="mb-1 text-[20px] font-semibold">{collection.label}</h3>
-                  <p className="mb-5 text-[14px] text-white/70">{collection.description || "Explora equipos disponibles"}</p>
-                  <span className="text-[13px] font-medium text-white group-hover:underline">
-                    Explorar →
-                  </span>
-                </Link>
-              </AnimatedSection>
-              );
-            })}
-          </div> : <div className="rounded-[var(--radius-lg)] border border-dashed border-[var(--border-strong)] bg-[var(--surface)] px-6 py-10 text-center"><p className="font-semibold text-[var(--text-primary)]">Categorías en preparación</p><p className="mt-2 text-[14px] text-[var(--text-secondary)]">Pronto encontrarás accesos directos para explorar el catálogo.</p></div>}
         </div>
+
+        {fundas.length > 0 ? <FundaConveyor products={fundas} whatsappNumber={settings.whatsappNumber} /> : <div className="mx-auto max-w-[980px] px-5"><div className="rounded-[var(--radius-lg)] border border-dashed border-[var(--border-strong)] bg-[var(--surface)] px-6 py-10 text-center"><p className="font-semibold text-[var(--text-primary)]">Categorías en preparación</p><p className="mt-2 text-[14px] text-[var(--text-secondary)]">Pronto encontrarás accesos directos para explorar el catálogo.</p></div></div>}
       </section>
 
       {/* ── Featured Products ─────────────────────────────────── */}

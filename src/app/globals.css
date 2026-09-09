@@ -420,6 +420,27 @@ body {
 .featured-showcase-copy { display: flex; flex-direction: column; justify-content: center; padding: clamp(2rem, 6vw, 5.5rem); }
 @media (max-width: 700px) { .featured-showcase, .featured-showcase-reverse { display: flex; flex-direction: column; } .featured-showcase-image, .featured-showcase-reverse .featured-showcase-image { min-height: 17rem; order: 1; } .featured-showcase-copy, .featured-showcase-reverse .featured-showcase-copy { order: 2; padding: 2rem 1.5rem 2.25rem; } }
 
+/* ── Conveyor / Infinite Marquee ───────────────────────────── */
+@keyframes conveyor-marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-conveyor {
+  display: flex;
+  width: max-content;
+  animation: conveyor-marquee 35s linear infinite;
+  will-change: transform;
+}
+
+.conveyor-track:hover .animate-conveyor {
+  animation-play-state: paused;
+}
+
 /* ── Status Indicators ─────────────────────────────────────── */
 .status-dot {
   width: 10px;

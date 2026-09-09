@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import { getAboutContent } from "@/lib/about";
 
@@ -21,27 +22,52 @@ export default async function NosotrosPage() {
               "radial-gradient(ellipse 70% 55% at 30% 0%, rgba(0,113,227,0.22) 0%, transparent 65%), radial-gradient(ellipse 60% 50% at 85% 90%, rgba(0,113,227,0.12) 0%, transparent 60%)",
           }}
         />
+        {/* Mobile-only artwork: low-opacity image off to one side, behind the copy */}
+        <div aria-hidden="true" className="absolute inset-0 pointer-events-none lg:hidden">
+          <Image
+            src="/BIENVENIDA.png"
+            alt=""
+            width={480}
+            height={640}
+            className="absolute -right-10 top-8 h-[20rem] w-[16rem] rotate-6 object-contain opacity-15 select-none"
+            priority
+          />
+        </div>
+
         <div className="container-apple section-padding relative z-10">
-          <div className="max-w-3xl">
-            <AnimatedSection delay={0} repeat>
-              {hero.kicker.visible && (
-                <div className="flex items-center gap-3">
-                  <span aria-hidden="true" className="h-px w-10 bg-[var(--accent)]" />
-                  <p className="text-[13px] font-semibold uppercase tracking-[0.22em] text-[var(--accent)]">{hero.kicker.text}</p>
-                </div>
-              )}
-            </AnimatedSection>
-            <AnimatedSection delay={0.08} repeat>
-              {hero.headline.visible && (
-                <h1 className="text-editorial mt-6 text-[clamp(2.6rem,7.5vw,5.5rem)] text-white">
-                  {hero.headline.text}
-                </h1>
-              )}
-            </AnimatedSection>
-            <AnimatedSection delay={0.16} repeat>
-              {hero.subhead.visible && (
-                <p className="mt-8 max-w-xl text-body-lg leading-7 text-[#A1A1A6]">{hero.subhead.text}</p>
-              )}
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-12">
+            <div className="max-w-3xl">
+              <AnimatedSection delay={0} repeat>
+                {hero.kicker.visible && (
+                  <div className="flex items-center gap-3">
+                    <span aria-hidden="true" className="h-px w-10 bg-[var(--accent)]" />
+                    <p className="text-[13px] font-semibold uppercase tracking-[0.22em] text-[var(--accent)]">{hero.kicker.text}</p>
+                  </div>
+                )}
+              </AnimatedSection>
+              <AnimatedSection delay={0.08} repeat>
+                {hero.headline.visible && (
+                  <h1 className="text-editorial mt-6 text-[clamp(2.6rem,7.5vw,5.5rem)] text-white">
+                    {hero.headline.text}
+                  </h1>
+                )}
+              </AnimatedSection>
+              <AnimatedSection delay={0.16} repeat>
+                {hero.subhead.visible && (
+                  <p className="mt-8 max-w-xl text-body-lg leading-7 text-[#A1A1A6]">{hero.subhead.text}</p>
+                )}
+              </AnimatedSection>
+            </div>
+            {/* Desktop: image to the right of the hero text */}
+            <AnimatedSection delay={0.16} className="hidden lg:flex justify-end">
+              <Image
+                src="/BIENVENIDA.png"
+                alt="Bienvenida"
+                width={640}
+                height={780}
+                className="w-[min(320px,18vw)] h-auto object-contain drop-shadow-2xl select-none"
+                priority
+              />
             </AnimatedSection>
           </div>
         </div>
