@@ -82,6 +82,13 @@ export default function NotaDeVenta({ order, className = "" }: { order: AdminOrd
           Firma del cliente
         </div>
       </footer>
+
+      <div className="print-footer" aria-hidden="true">
+        {/* eslint-disable-next-line @next/next/no-img-element -- plain <img> kept for html2canvas/print capture */}
+        <img src="/BRAZOS_CRUZADOS.png" alt="" className="brand-left" />
+        {/* eslint-disable-next-line @next/next/no-img-element -- plain <img> kept for html2canvas/print capture */}
+        <img src="/J14Premium.png" alt="" className="brand-right" />
+      </div>
     </div>
   );
 }

@@ -1,10 +1,16 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/auth/roles";
 import { getAdminOrderDetail } from "@/lib/actions/admin-orders";
 import PrintButton from "../PrintButton";
 import NotaDeVenta from "../../NotaDeVenta";
 
 type Props = { params: Promise<{ id: string }> };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  return { title: `NotaVenta-${id}` };
+}
 
 export default async function OrderReceiptPage({ params }: Props) {
   await requireAdmin();
@@ -17,7 +23,7 @@ export default async function OrderReceiptPage({ params }: Props) {
       <div id="print-area" className="overflow-hidden rounded-2xl shadow-[var(--shadow-lg)]">
         <NotaDeVenta order={order} />
       </div>
-      <PrintButton />
+      <PrintButton orderId={order.id} />
     </main>
   );
 }

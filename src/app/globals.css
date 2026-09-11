@@ -864,4 +864,24 @@ select:focus-visible {
   #print-area, #print-area * { visibility: visible; }
   #print-area { position: absolute; left: 0; top: 0; width: 100%; }
   @page { margin: 12mm; }
+
+  /* Repeat brand footer on every printed page (fixed = repeats in Chrome/Firefox) */
+  .print-footer {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 56px;
+    pointer-events: none;
+  }
+  .print-footer img {
+    position: absolute;
+    bottom: 0;
+    height: 44px;
+    width: auto;
+    object-fit: contain;
+    opacity: 0.4;
+  }
+  .print-footer .brand-left { left: 0; }
+  .print-footer .brand-right { right: 0; }
 }
