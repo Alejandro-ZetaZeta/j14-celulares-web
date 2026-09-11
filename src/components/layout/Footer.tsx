@@ -87,12 +87,6 @@ export default function Footer() {
           <p className="text-caption">
             Copyright &copy; {year} J14 Celulares. Todos los derechos reservados.
           </p>
-          <Link
-            href="/login"
-            className="text-[12px] text-[var(--text-tertiary)] hover:text-[var(--accent)] transition-colors duration-150"
-          >
-            Acceso Administrador
-          </Link>
         </div>
       </div>
     </footer>

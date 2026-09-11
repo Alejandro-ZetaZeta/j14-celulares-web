@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { getCatalogCollections, getProducts } from "@/lib/data/catalog";
 import { collectionMatches, getCatalogChips, normalize, sortProducts } from "@/lib/catalog-filters";
 import CatalogToolbar from "./CatalogToolbar";
+import CatalogSkeleton from "./CatalogSkeleton";
 import CatalogProductTile from "@/components/catalog/CatalogProductTile";
 
 export const metadata: Metadata = {
@@ -55,5 +56,5 @@ async function CatalogContent({ searchParams }: PageProps) {
 }
 
 export default function CatalogoPage({ searchParams }: PageProps) {
-  return <Suspense fallback={<div className="min-h-screen p-12 text-[var(--text-tertiary)]">Cargando catálogo...</div>}><CatalogContent searchParams={searchParams} /></Suspense>;
+  return <Suspense fallback={<CatalogSkeleton />}><CatalogContent searchParams={searchParams} /></Suspense>;
 }
