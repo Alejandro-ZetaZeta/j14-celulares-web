@@ -702,12 +702,20 @@ body {
 }
 
 /* ── Editorial Display (Nosotros) ─────────────────────────── */
+/* Renders only the lowercase "f" (U+0066) and uppercase "J" (U+004A)
+   of the editorial font with Georgia; everything else keeps Fraunces. */
+@font-face {
+  font-family: "J14EditorialFix";
+  src: local("Georgia");
+  unicode-range: U+0066, U+004A;
+}
+
 .font-display {
   font-family: "Fraunces", "Inter", Georgia, serif;
 }
 
 .text-editorial {
-  font-family: "Fraunces", Georgia, serif;
+  font-family: "J14EditorialFix", "Fraunces", Georgia, serif;
   font-weight: 500;
   letter-spacing: -0.02em;
   line-height: 1.05;
@@ -716,7 +724,7 @@ body {
 
 .drop-cap::first-letter {
   float: left;
-  font-family: "Fraunces", Georgia, serif;
+  font-family: "Georgia", "Times New Roman", serif;
   font-size: 3.4em;
   font-weight: 600;
   line-height: 0.82;
