@@ -4,12 +4,13 @@ import { createInsforgeServerClient } from "@/lib/insforge-server";
 import { roundCents, IVA_RATE } from "@/lib/cart";
 import { calculatePromotion } from "@/lib/promotions";
 import { datawebApproved } from "@/lib/dataweb";
+import { citiesForProvince, ECUADOR_PROVINCES } from "@/lib/ecuador";
 
 interface CallbackItem { variantId: string; quantity: number; giftVariantIds?: string[] }
 interface CallbackBody {
   paymentResponse?: unknown;
   paymentTransaction?: string;
-  customer: { fullName: string; cedula: string; email: string; phone: string; address: string };
+  customer: { fullName: string; cedula: string; email: string; phone: string; address: string; province: string; city: string; postcode: string };
   items: CallbackItem[];
   promotionCode?: string;
 }
@@ -50,7 +51,11 @@ function transactionId(response: unknown): string | null {
 function validBody(value: unknown): value is CallbackBody {
   if (!isRecord(value) || !isRecord(value.customer) || !Array.isArray(value.items)) return false;
   const customer = value.customer;
-  return ["fullName", "cedula", "email", "phone", "address"].every((key) => typeof customer[key] === "string" && customer[key].trim())
+  const province = typeof customer.province === "string" ? customer.province.trim() : "";
+  const city = typeof customer.city === "string" ? customer.city.trim() : "";
+  const provinceOk = ECUADOR_PROVINCES.includes(province as (typeof ECUADOR_PROVINCES)[number]);
+  return ["fullName", "cedula", "email", "phone", "address", "postcode"].every((key) => typeof customer[key] === "string" && customer[key].trim())
+    && provinceOk && citiesForProvince(province).includes(city)
     && value.items.length > 0
     && value.items.every((item) => isRecord(item) && typeof item.variantId === "string" && typeof item.quantity === "number" && Number.isInteger(item.quantity) && item.quantity > 0 && (item.giftVariantIds === undefined || (Array.isArray(item.giftVariantIds) && item.giftVariantIds.every((id) => typeof id === "string"))));
 }
@@ -141,9 +146,9 @@ export async function POST(request: Request) {
     const client = await createInsforgeServerClient();
     const { data } = await client.auth.getCurrentUser();
     userId = data?.user?.id ?? null;
-  } catch { /* Guest checkout has no session. */ }
+  } catch { /* Checkout requires login, but keep the order attached to the session when available. */ }
 
-  const customerInput = { identification: body.customer.cedula.trim(), full_name: body.customer.fullName.trim(), email: body.customer.email.trim(), phone: body.customer.phone.trim(), address: body.customer.address.trim(), user_id: userId };
+  const customerInput = { identification: body.customer.cedula.trim(), full_name: body.customer.fullName.trim(), email: body.customer.email.trim(), phone: body.customer.phone.trim(), address: body.customer.address.trim(), province: body.customer.province.trim(), city: body.customer.city.trim(), postcode: body.customer.postcode.trim(), user_id: userId };
   const { data: existingCustomer } = await insforgeAdmin.database.from("customers").select("id").eq("identification", customerInput.identification).maybeSingle();
   let customerId: string;
   if (existingCustomer?.id) {

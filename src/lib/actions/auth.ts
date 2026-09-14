@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { createAuthActions, createServerClient } from "@insforge/sdk/ssr";
 import type { AppRole } from "@/lib/auth/roles";
 import { isStrongPassword } from "@/lib/auth/password";
+import { citiesForProvince, ECUADOR_PROVINCES } from "@/lib/ecuador";
 
 const PENDING_PROFILE_COOKIE = "client_pending_profile";
 const CURRENT_TERMS_VERSION = "2026-08";
@@ -243,6 +244,9 @@ export async function updateClientProfileAction(formData: FormData) {
   const cedula = String(formData.get("cedula") ?? "").trim();
   const dateOfBirth = String(formData.get("date_of_birth") ?? "").trim();
   const address = String(formData.get("address") ?? "").trim();
+  const province = String(formData.get("province") ?? "").trim();
+  const city = String(formData.get("city") ?? "").trim();
+  const postcode = String(formData.get("postcode") ?? "").trim();
   const parsedDate = /^\d{4}-\d{2}-\d{2}$/.test(dateOfBirth) ? new Date(`${dateOfBirth}T00:00:00Z`) : null;
   const today = new Date();
   const age = parsedDate ? today.getUTCFullYear() - parsedDate.getUTCFullYear() - (
@@ -254,9 +258,13 @@ export async function updateClientProfileAction(formData: FormData) {
     return { error: { message: "Ingresa una cédula válida y una fecha de nacimiento válida para mayores de 18 años." } };
   }
 
+  if (!ECUADOR_PROVINCES.includes(province as (typeof ECUADOR_PROVINCES)[number]) || !citiesForProvince(province).includes(city) || !postcode || postcode.length > 10) {
+    return { error: { message: "Selecciona tu provincia y ciudad de Ecuador e ingresa un código postal válido." } };
+  }
+
   const { data: updatedProfile, error } = await client.database
     .from("user_profiles")
-    .update({ cedula, date_of_birth: dateOfBirth, address: address || null, is_profile_completed: true })
+    .update({ cedula, date_of_birth: dateOfBirth, address, province, city, postcode, is_profile_completed: true })
     .eq("id", userData.user.id)
     .eq("role", "client")
     .select("id")

@@ -104,9 +104,23 @@ export interface UserProfile {
   cedula: string | null;
   date_of_birth: string | null;
   address: string | null;
+  province: string | null;
+  city: string | null;
+  postcode: string | null;
   is_profile_completed: boolean;
   terms_accepted_at: string | null;
   terms_version: string | null;
+  created_at: string;
+}
+
+export interface BillingAddress {
+  id: string;
+  user_id: string;
+  label: string | null;
+  street: string;
+  province: string;
+  city: string;
+  postcode: string | null;
   created_at: string;
 }
 
@@ -162,6 +176,9 @@ export interface Customer {
   email: string;
   phone: string;
   address: string;
+  province: string | null;
+  city: string | null;
+  postcode: string | null;
   user_id: string | null;
   created_at: string;
 }

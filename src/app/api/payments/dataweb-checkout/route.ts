@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { insforgeAdmin } from "@/lib/insforge-admin";
 import { buildDatawebParams, datawebBaseUrl, type DatawebCustomer, type DatawebItem } from "@/lib/dataweb";
+import { citiesForProvince, ECUADOR_PROVINCES } from "@/lib/ecuador";
 import type { CartTotals } from "@/types/cart";
 
 function valid(input: unknown): input is { customer: DatawebCustomer; items: DatawebItem[]; totals: CartTotals; promotionCode?: string } {
@@ -9,8 +10,11 @@ function valid(input: unknown): input is { customer: DatawebCustomer; items: Dat
   const customer = value.customer as Record<string, unknown> | undefined;
   const totals = value.totals as Record<string, unknown> | undefined;
   if (!customer || !totals) return false;
+  const provinceOk = typeof customer.province === "string" && ECUADOR_PROVINCES.includes(customer.province as (typeof ECUADOR_PROVINCES)[number]);
+  const cityOk = provinceOk && typeof customer.city === "string" && citiesForProvince(String(customer.province)).includes(String(customer.city));
   return Boolean(customer && totals && Array.isArray(value.items) && value.items.length > 0)
-    && ["fullName", "cedula", "email", "phone", "address"].every((key) => typeof customer?.[key] === "string" && String(customer[key]).trim())
+    && ["fullName", "cedula", "email", "phone", "address", "postcode"].every((key) => typeof customer?.[key] === "string" && String(customer[key]).trim())
+    && provinceOk && cityOk
     && /^\d{10}$/.test(String(customer?.cedula))
     && ["subtotalBase0", "subtotalBase15", "ivaAmount", "total"].every((key) => Number.isFinite(Number(totals?.[key])))
     && Number(totals.total) >= 1

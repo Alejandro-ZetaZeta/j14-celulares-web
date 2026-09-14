@@ -87,11 +87,11 @@ function ResetPasswordContent() {
 
   return (
       <ClientAuthShell eyebrow="Recuperar acceso" title={resetToken ? "Crea una nueva contraseña" : "Verifica tu código"}>
-      <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-4">
         <p className="text-[14px] leading-6 text-[var(--text-secondary)]">{resetToken ? "Código confirmado. Ahora elige una nueva contraseña." : <>Enviamos un código a <strong className="text-[var(--text-primary)]">{email}</strong>.</>}</p>
         {!email && <p role="alert" className="rounded-[12px] border border-red-200 bg-red-50 px-4 py-3 text-[14px] text-red-700">Falta el correo de recuperación. Solicita un código nuevo.</p>}
         {error && <p role="alert" className="rounded-[12px] border border-red-200 bg-red-50 px-4 py-3 text-[14px] text-red-700">{error}</p>}
-        {!resetToken ? <form onSubmit={verifyOtp} className="flex flex-col gap-4">
+        {!resetToken ? <form onSubmit={verifyOtp} className="flex flex-col gap-3.5">
           <fieldset className="flex min-w-0 w-full flex-col gap-2">
             <legend className="text-[13px] font-semibold">Código OTP</legend>
             <div className="grid w-full min-w-0 grid-cols-6 gap-1.5 sm:gap-2" onPaste={handlePaste}>
@@ -99,10 +99,10 @@ function ResetPasswordContent() {
             </div>
           </fieldset>
           <button type="submit" disabled={loading || otp.length !== 6 || !email} className="btn-primary w-full justify-center disabled:opacity-50">{loading ? "Verificando código..." : "Verificar código"}</button>
-        </form> : <form onSubmit={submitPassword} className="flex flex-col gap-4">
-          <label className="flex flex-col gap-1.5 text-[13px] font-semibold">Nueva contraseña<span className="relative"><input required type={showPassword ? "text" : "password"} autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} className="w-full rounded-[11px] border border-[var(--border-strong)] px-4 py-3 pr-12 text-[15px] outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20" /><PasswordVisibilityButton visible={showPassword} onToggle={() => setShowPassword((visible) => !visible)} /></span></label>
-          <label className="flex flex-col gap-1.5 text-[13px] font-semibold">Repite la contraseña<span className="relative"><input required type={showPassword ? "text" : "password"} autoComplete="new-password" value={confirmation} onChange={(event) => setConfirmation(event.target.value)} className="w-full rounded-[11px] border border-[var(--border-strong)] px-4 py-3 pr-12 text-[15px] outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20" /><PasswordVisibilityButton visible={showPassword} onToggle={() => setShowPassword((visible) => !visible)} /></span></label>
-          <ul aria-label="Requisitos de contraseña" className="grid grid-cols-1 gap-1.5 rounded-[12px] bg-[var(--bg-secondary)] p-3 text-[12px] text-[var(--text-secondary)] sm:grid-cols-2">
+        </form> : <form onSubmit={submitPassword} className="flex flex-col gap-3.5">
+          <label className="flex flex-col gap-1.5 text-[13px] font-semibold">Nueva contraseña<span className="relative"><input required type={showPassword ? "text" : "password"} autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} className="w-full rounded-[11px] border border-[var(--border-strong)] px-4 py-2.5 pr-12 text-[14px] outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20" /><PasswordVisibilityButton visible={showPassword} onToggle={() => setShowPassword((visible) => !visible)} /></span></label>
+          <label className="flex flex-col gap-1.5 text-[13px] font-semibold">Repite la contraseña<span className="relative"><input required type={showPassword ? "text" : "password"} autoComplete="new-password" value={confirmation} onChange={(event) => setConfirmation(event.target.value)} className="w-full rounded-[11px] border border-[var(--border-strong)] px-4 py-2.5 pr-12 text-[14px] outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20" /><PasswordVisibilityButton visible={showPassword} onToggle={() => setShowPassword((visible) => !visible)} /></span></label>
+          <ul aria-label="Requisitos de contraseña" className="grid grid-cols-1 gap-1 rounded-[12px] bg-[var(--bg-secondary)] p-2.5 text-[11px] text-[var(--text-secondary)] sm:grid-cols-2">
             {PASSWORD_REQUIREMENTS.map((requirement) => <li key={requirement.key} className={requirement.test(password) ? "font-semibold text-[var(--status-green)]" : ""}><span aria-hidden="true">{requirement.test(password) ? "✓" : "○"}</span> {requirement.label}</li>)}
           </ul>
           <button type="submit" disabled={loading || !isStrongPassword(password) || password !== confirmation} className="btn-primary w-full justify-center disabled:opacity-50">{loading ? "Guardando..." : "Cambiar contraseña"}</button>

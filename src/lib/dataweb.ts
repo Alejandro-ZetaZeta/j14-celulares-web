@@ -8,6 +8,10 @@ export interface DatawebCustomer {
   email: string;
   phone: string;
   address: string;
+  province: string;
+  city: string;
+  postcode: string;
+  birthDate?: string;
 }
 
 export interface DatawebItem {
@@ -60,9 +64,18 @@ export function buildDatawebParams(input: {
   append("customer.identificationDocType", "IDCARD");
   append("customer.identificationDocId", customer.cedula.replace(/\D/g, "").slice(0, 10));
   append("customer.phone", customer.phone.replace(/[^\d+]/g, "").slice(0, 25));
+  if (customer.birthDate && /^\d{4}-\d{2}-\d{2}$/.test(customer.birthDate)) {
+    append("customer.birthDate", customer.birthDate);
+  }
   append("billing.street1", customer.address.trim().slice(0, 100));
+  append("billing.city", customer.city.trim().slice(0, 50));
+  append("billing.state", customer.province.trim().slice(0, 50));
+  append("billing.postcode", customer.postcode.trim().slice(0, 10));
   append("billing.country", "EC");
   append("shipping.street1", customer.address.trim().slice(0, 100));
+  append("shipping.city", customer.city.trim().slice(0, 50));
+  append("shipping.state", customer.province.trim().slice(0, 50));
+  append("shipping.postcode", customer.postcode.trim().slice(0, 10));
   append("shipping.country", "EC");
   append("customParameters[SHOPPER_VAL_BASE0]", input.totals.subtotalBase0.toFixed(2));
   append("customParameters[SHOPPER_VAL_BASEIMP]", input.totals.subtotalBase15.toFixed(2));

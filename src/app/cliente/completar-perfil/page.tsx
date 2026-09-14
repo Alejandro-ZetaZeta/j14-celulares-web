@@ -8,7 +8,7 @@ async function CompleteProfileContent() {
 
   return (
     <ClientAuthShell eyebrow="Un último paso" title="Completa tu perfil">
-      <CompleteProfileForm initial={{ cedula: profile?.cedula ?? "", dateOfBirth: profile?.date_of_birth ?? "", address: profile?.address ?? "" }} />
+      <CompleteProfileForm initial={{ cedula: profile?.cedula ?? "", dateOfBirth: profile?.date_of_birth ?? "", address: profile?.address ?? "", province: profile?.province ?? "", city: profile?.city ?? "", postcode: profile?.postcode ?? "" }} />
     </ClientAuthShell>
   );
 }

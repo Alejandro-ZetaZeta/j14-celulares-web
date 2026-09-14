@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import ClientAuthShell from "@/components/client/ClientAuthShell";
+import GoogleIcon from "@/components/client/GoogleIcon";
 import PasswordVisibilityButton from "@/components/client/PasswordVisibilityButton";
 import { initiateClientGoogleAction, signInClientAction } from "@/lib/actions/auth";
 
@@ -53,16 +54,16 @@ function LoginContent() {
 
   return (
     <ClientAuthShell eyebrow="Bienvenido" title="Inicia sesión">
-      <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-4">
         {error && <p role="alert" className="rounded-[12px] border border-red-200 bg-red-50 px-4 py-3 text-[14px] text-red-700">{error}</p>}
         {resetSuccess && <p role="status" className="rounded-[12px] bg-[var(--accent-light)] px-4 py-3 text-[14px] text-[var(--accent)]">Contraseña actualizada. Ya puedes iniciar sesión.</p>}
-        <button type="button" onClick={continueWithGoogle} disabled={loading} className="flex w-full items-center justify-center gap-3 rounded-[12px] border border-[var(--border-strong)] px-4 py-3 text-[14px] font-semibold text-[var(--text-primary)] transition hover:bg-[var(--bg-secondary)] disabled:opacity-50">
-          <span className="text-[18px] font-bold" aria-hidden="true">G</span> Continuar con Google
+        <button type="button" onClick={continueWithGoogle} disabled={loading} className="flex w-full items-center justify-center gap-3 rounded-[12px] border border-[var(--border-strong)] px-4 py-2.5 text-[14px] font-semibold text-[var(--text-primary)] transition hover:bg-[var(--bg-secondary)] disabled:opacity-50">
+          <GoogleIcon /> Continuar con Google
         </button>
         <div className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.15em] text-[var(--text-tertiary)]"><span className="h-px flex-1 bg-[var(--border)]" />o<span className="h-px flex-1 bg-[var(--border)]" /></div>
-        <form onSubmit={submit} className="flex flex-col gap-4">
-          <label className="flex flex-col gap-1.5 text-[13px] font-semibold">Correo electrónico<input required type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} className="rounded-[11px] border border-[var(--border-strong)] px-4 py-3 text-[15px] outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20" /></label>
-           <label className="flex flex-col gap-1.5 text-[13px] font-semibold">Contraseña<span className="relative"><input required type={showPassword ? "text" : "password"} autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full rounded-[11px] border border-[var(--border-strong)] px-4 py-3 pr-12 text-[15px] outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20" /><PasswordVisibilityButton visible={showPassword} onToggle={() => setShowPassword((visible) => !visible)} /></span></label>
+        <form onSubmit={submit} className="flex flex-col gap-3.5">
+          <label className="flex flex-col gap-1.5 text-[13px] font-semibold">Correo electrónico<input required type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} className="rounded-[11px] border border-[var(--border-strong)] px-4 py-2.5 text-[14px] outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20" /></label>
+           <label className="flex flex-col gap-1.5 text-[13px] font-semibold">Contraseña<span className="relative"><input required type={showPassword ? "text" : "password"} autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full rounded-[11px] border border-[var(--border-strong)] px-4 py-2.5 pr-12 text-[14px] outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20" /><PasswordVisibilityButton visible={showPassword} onToggle={() => setShowPassword((visible) => !visible)} /></span></label>
           <button type="submit" disabled={loading} className="btn-primary mt-1 w-full justify-center disabled:opacity-50">{loading ? "Entrando..." : "Iniciar sesión"}</button>
         </form>
         <p className="text-center text-[14px] text-[var(--text-secondary)]"><Link href="/cliente/recuperar-password" className="font-semibold text-[var(--accent)] hover:underline">¿Olvidaste tu contraseña?</Link></p>

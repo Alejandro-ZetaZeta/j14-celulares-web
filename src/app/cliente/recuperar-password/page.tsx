@@ -27,11 +27,11 @@ export default function RecoverPasswordPage() {
 
   return (
     <ClientAuthShell eyebrow="Recuperar acceso" title="Restablece tu contraseña">
-      <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-4">
         <p className="text-[14px] leading-6 text-[var(--text-secondary)]">Ingresa el correo de tu cuenta y te enviaremos un código de 6 dígitos.</p>
         {error && <p role="alert" className="rounded-[12px] border border-red-200 bg-red-50 px-4 py-3 text-[14px] text-red-700">{error}</p>}
-        <form onSubmit={submit} className="flex flex-col gap-4">
-          <label className="flex flex-col gap-1.5 text-[13px] font-semibold">Correo electrónico<input required type="email" maxLength={254} autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} className="rounded-[11px] border border-[var(--border-strong)] px-4 py-3 text-[15px] outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20" /></label>
+        <form onSubmit={submit} className="flex flex-col gap-3.5">
+          <label className="flex flex-col gap-1.5 text-[13px] font-semibold">Correo electrónico<input required type="email" maxLength={254} autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} className="rounded-[11px] border border-[var(--border-strong)] px-4 py-2.5 text-[14px] outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20" /></label>
           <button type="submit" disabled={loading} className="btn-primary w-full justify-center disabled:opacity-50">{loading ? "Buscando cuenta..." : "Enviar código"}</button>
         </form>
         <p className="text-center text-[14px] text-[var(--text-secondary)]"><Link href="/login" className="font-semibold text-[var(--accent)] hover:underline">Volver a iniciar sesión</Link></p>

@@ -80,7 +80,7 @@ function VerifyOtpContent() {
   }
 
   return <ClientAuthShell eyebrow="Verificación" title="Confirma tu correo">
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-4">
        <p className="text-[14px] leading-6 text-[var(--text-secondary)]">{email ? <>Enviamos un código de 6 dígitos a <strong className="text-[var(--text-primary)]">{email}</strong>.</> : "Falta el correo que necesita verificación. Regresa al registro e inténtalo de nuevo."}</p>
       {error && <p role="alert" className="rounded-[12px] border border-red-200 bg-red-50 px-4 py-3 text-[14px] text-red-700">{error}</p>}
       {notice && <p role="status" className="rounded-[12px] bg-[var(--accent-light)] px-4 py-3 text-[14px] text-[var(--accent)]">{notice}</p>}
