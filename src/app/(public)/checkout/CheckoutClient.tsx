@@ -23,13 +23,13 @@ interface CustomerForm {
 
 const emptyNewAddress = { label: "", street: "", province: "", city: "", postcode: "" };
 
-export default function CheckoutClient({ profile }: { profile: UserProfile }) {
+export default function CheckoutClient({ profile, initialEmail = "" }: { profile: UserProfile; initialEmail?: string }) {
   const router = useRouter();
   const { items, totals, ivaRate, promotionCode } = useCart();
   const [customer, setCustomer] = useState<CustomerForm>({
     fullName: profile.full_name ?? "",
     cedula: profile.cedula ?? "",
-    email: "",
+    email: initialEmail,
     phone: profile.phone ?? "",
     address: profile.address ?? "",
     province: profile.province ?? "",
@@ -126,7 +126,7 @@ export default function CheckoutClient({ profile }: { profile: UserProfile }) {
 
   async function proceed() {
     if (!items.length) { router.push("/catalogo"); return; }
-    if (!customer.fullName.trim() || !/^\d{10}$/.test(customer.cedula.trim()) || !/^\S+@\S+\.\S+$/.test(customer.email.trim()) || !customer.phone.trim() || !customer.address.trim() || !customer.province.trim() || !customer.city.trim() || !customer.postcode.trim()) { setError("Completa todos los datos. La cédula debe contener exactamente 10 dígitos."); return; }
+    if (!customer.fullName.trim() || !/^\d{10}$/.test(customer.cedula.trim()) || !/^\S+@\S+\.\S+$/.test(customer.email.trim()) || !customer.phone.trim() || !customer.address.trim() || !customer.province.trim() || !customer.city.trim() || !/^\d{6}$/.test(customer.postcode.trim())) { setError("Completa todos los datos. La cédula debe contener exactamente 10 dígitos y el código postal 6 dígitos."); return; }
     setError(""); setStatus("Preparando pago seguro Dataweb..."); setPaying(true);
     try {
       const payloadItems = items.map((item) => ({ variantId: item.variantId, brand: item.brand, model: item.model, capacity: item.capacity, color: item.color, unitPrice: item.unitPrice, quantity: item.quantity, giftVariantIds: item.gifts.map((gift) => gift.variantId) }));
@@ -215,8 +215,8 @@ export default function CheckoutClient({ profile }: { profile: UserProfile }) {
                 <label className="block text-[13px] font-semibold text-[var(--text-secondary)]">Provincia *<select value={newAddress.province} onChange={(event) => setNewAddress((current) => ({ ...current, province: event.target.value, city: "" }))} className="input-apple mt-2 w-full" required><option value="">Selecciona...</option>{ECUADOR_PROVINCES.map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
                 <label className="block text-[13px] font-semibold text-[var(--text-secondary)]">Ciudad *<select value={newAddress.city} onChange={(event) => setNewAddress((current) => ({ ...current, city: event.target.value }))} disabled={!newAddress.province} className="input-apple mt-2 w-full disabled:opacity-50" required><option value="">{newAddress.province ? "Selecciona..." : "Elige provincia primero"}</option>{cityOptions.map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
               </div>
-              <label className="block text-[13px] font-semibold text-[var(--text-secondary)]">Código postal *<input type="text" inputMode="numeric" maxLength={10} value={newAddress.postcode} onChange={(event) => setNewAddress((current) => ({ ...current, postcode: event.target.value.replace(/\D/g, "").slice(0, 10) }))} className="input-apple mt-2 w-full" required /></label>
-              <button type="button" onClick={() => void saveNewAddress()} disabled={savingAddress || !newAddress.street.trim() || !newAddress.province || !newAddress.city || !newAddress.postcode} className="btn-primary w-full justify-center disabled:opacity-50">{savingAddress ? "Guardando..." : "Guardar y usar esta dirección"}</button>
+              <label className="block text-[13px] font-semibold text-[var(--text-secondary)]">Código postal *<input type="text" inputMode="numeric" pattern="[0-9]{6}" maxLength={6} value={newAddress.postcode} onChange={(event) => setNewAddress((current) => ({ ...current, postcode: event.target.value.replace(/\D/g, "").slice(0, 6) }))} className="input-apple mt-2 w-full" required /></label>
+              <button type="button" onClick={() => void saveNewAddress()} disabled={savingAddress || !newAddress.street.trim() || !newAddress.province || !newAddress.city || !/^\d{6}$/.test(newAddress.postcode)} className="btn-primary w-full justify-center disabled:opacity-50">{savingAddress ? "Guardando..." : "Guardar y usar esta dirección"}</button>
             </div>
           )}
         </section>

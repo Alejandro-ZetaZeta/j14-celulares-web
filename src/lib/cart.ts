@@ -1,6 +1,30 @@
+import type { ProductWithVariants, ProductVariant } from "@/types/database";
 import type { CartItem, CartTotals } from "@/types/cart";
 
 export const IVA_RATE = 0.15;
+
+export function buildCartItem(product: ProductWithVariants, variant: ProductVariant): CartItem {
+  const gifts = (product.product_gifts ?? []).map((gift) => {
+    const giftProduct = Array.isArray(gift.gift_product) ? gift.gift_product[0] : gift.gift_product;
+    const giftVariant = giftProduct?.product_variants?.find((candidate) => candidate.stock > 0);
+    if (!giftVariant || !giftProduct) return null;
+    return { productId: giftProduct.id, variantId: giftVariant.id, brand: giftProduct.brand, model: giftProduct.model, capacity: giftVariant.capacity, color: giftVariant.color, quantity: gift.quantity };
+  }).filter((gift): gift is NonNullable<typeof gift> => Boolean(gift));
+
+  return {
+    variantId: variant.id,
+    productId: product.id,
+    brand: product.brand,
+    model: product.model,
+    capacity: variant.capacity,
+    color: variant.color,
+    unitPrice: variant.price,
+    imageUrl: product.image_url,
+    quantity: 1,
+    stock: variant.stock,
+    gifts,
+  };
+}
 
 export function roundCents(value: number): number {
   return Math.round((value + Number.EPSILON) * 100) / 100;

@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { getCatalogCollections, getProducts } from "@/lib/data/catalog";
+import { getSiteSettings } from "@/lib/site-settings";
 import { collectionMatches, getCatalogChips, normalize, sortProducts } from "@/lib/catalog-filters";
 import CatalogToolbar from "./CatalogToolbar";
 import CatalogSkeleton from "./CatalogSkeleton";
@@ -15,7 +16,7 @@ interface PageProps { searchParams: Promise<{ q?: string; coleccion?: string; br
 
 async function CatalogContent({ searchParams }: PageProps) {
   const params = await searchParams;
-  const [products, collections] = await Promise.all([getProducts(), getCatalogCollections()]);
+  const [products, collections, settings] = await Promise.all([getProducts(), getCatalogCollections(), getSiteSettings()]);
   const collection = collections.find((item) => item.slug === params.coleccion);
   const q = normalize(params.q);
   const brand = normalize(params.brand);
@@ -45,7 +46,7 @@ async function CatalogContent({ searchParams }: PageProps) {
         <Suspense fallback={null}><CatalogToolbar chips={chips} count={filtered.length} /></Suspense>
         {filtered.length ? (
           <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 lg:gap-5">
-            {filtered.map((product) => <CatalogProductTile key={product.id} product={product} />)}
+            {filtered.map((product) => <CatalogProductTile key={product.id} product={product} whatsappNumber={settings.whatsappNumber} />)}
           </div>
         ) : (
           <div className="mt-10 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--bg-secondary)] px-6 py-20 text-center"><p className="text-[17px] font-semibold">No encontramos equipos</p><p className="mt-2 text-[14px] text-[var(--text-secondary)]">Prueba otra búsqueda o elimina algún filtro.</p></div>

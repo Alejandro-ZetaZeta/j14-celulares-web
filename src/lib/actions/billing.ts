@@ -14,13 +14,13 @@ export async function addBillingAddressAction(formData: FormData): Promise<{ add
   const street = String(formData.get("street") ?? "").trim();
   const province = String(formData.get("province") ?? "").trim();
   const city = String(formData.get("city") ?? "").trim();
-  const postcode = String(formData.get("postcode") ?? "").trim().slice(0, 10);
+  const postcode = String(formData.get("postcode") ?? "").trim();
 
   if (!street || street.length > 250) return { error: { message: "Ingresa la dirección de la calle (máximo 250 caracteres)." } };
   if (!ECUADOR_PROVINCES.includes(province as (typeof ECUADOR_PROVINCES)[number]) || !citiesForProvince(province).includes(city)) {
     return { error: { message: "Selecciona una provincia y ciudad de Ecuador." } };
   }
-  if (!postcode) return { error: { message: "Ingresa el código postal." } };
+  if (!/^\d{6}$/.test(postcode)) return { error: { message: "Ingresa un código postal de 6 dígitos." } };
 
   const { data, error } = await client.database
     .from("billing_addresses")

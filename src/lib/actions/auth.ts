@@ -241,6 +241,8 @@ export async function updateClientProfileAction(formData: FormData) {
   const { data: userData, error: userError } = await client.auth.getCurrentUser();
   if (userError || !userData?.user) return { error: { message: "Sesión no válida." } };
 
+  const fullName = String(formData.get("full_name") ?? "").trim();
+  const phone = String(formData.get("phone") ?? "").trim();
   const cedula = String(formData.get("cedula") ?? "").trim();
   const dateOfBirth = String(formData.get("date_of_birth") ?? "").trim();
   const address = String(formData.get("address") ?? "").trim();
@@ -254,17 +256,17 @@ export async function updateClientProfileAction(formData: FormData) {
     (today.getUTCMonth() === parsedDate.getUTCMonth() && today.getUTCDate() < parsedDate.getUTCDate()) ? 1 : 0
   ) : 0;
 
-  if (!/^\d{1,10}$/.test(cedula) || !parsedDate || Number.isNaN(parsedDate.getTime()) || parsedDate > today || age < 18 || age > 120 || address.length > 250) {
-    return { error: { message: "Ingresa una cédula válida y una fecha de nacimiento válida para mayores de 18 años." } };
+  if (!fullName || fullName.length > 100 || !/^\d{1,10}$/.test(phone) || !/^\d{1,10}$/.test(cedula) || !parsedDate || Number.isNaN(parsedDate.getTime()) || parsedDate > today || age < 18 || age > 120 || address.length > 250) {
+    return { error: { message: "Ingresa tu nombre, un teléfono válido, una cédula válida y una fecha de nacimiento válida para mayores de 18 años." } };
   }
 
-  if (!ECUADOR_PROVINCES.includes(province as (typeof ECUADOR_PROVINCES)[number]) || !citiesForProvince(province).includes(city) || !postcode || postcode.length > 10) {
-    return { error: { message: "Selecciona tu provincia y ciudad de Ecuador e ingresa un código postal válido." } };
+  if (!ECUADOR_PROVINCES.includes(province as (typeof ECUADOR_PROVINCES)[number]) || !citiesForProvince(province).includes(city) || !/^\d{6}$/.test(postcode)) {
+    return { error: { message: "Selecciona tu provincia y ciudad de Ecuador e ingresa un código postal de 6 dígitos." } };
   }
 
   const { data: updatedProfile, error } = await client.database
     .from("user_profiles")
-    .update({ cedula, date_of_birth: dateOfBirth, address, province, city, postcode, is_profile_completed: true })
+    .update({ full_name: fullName, phone, cedula, date_of_birth: dateOfBirth, address, province, city, postcode, is_profile_completed: true })
     .eq("id", userData.user.id)
     .eq("role", "client")
     .select("id")

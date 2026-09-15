@@ -15,15 +15,18 @@ function CatalogGridSkeleton() {
           <div className="catalog-tile-image">
             <Bone className="absolute inset-0 h-full w-full rounded-none" />
           </div>
-          <div className="p-4">
+          <div className="px-4 pt-4">
             <Bone className="h-3 w-16" />
             <Bone className="mt-2 h-4 w-3/4" />
-            <div className="mt-4 flex items-end justify-between gap-2">
-              <div>
-                <Bone className="h-2.5 w-10" />
-                <Bone className="mt-1.5 h-5 w-20" />
-              </div>
-              <Bone className="h-5 w-14 rounded-full" />
+          </div>
+          <div className="catalog-tile-price-row">
+            <div>
+              <Bone className="h-2.5 w-10" />
+              <Bone className="mt-1.5 h-5 w-20" />
+            </div>
+            <div className="flex gap-1.5">
+              <Bone className="h-8 w-8 rounded-full" />
+              <Bone className="h-8 w-8 rounded-full" />
             </div>
           </div>
         </div>

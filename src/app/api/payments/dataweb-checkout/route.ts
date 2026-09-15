@@ -16,6 +16,7 @@ function valid(input: unknown): input is { customer: DatawebCustomer; items: Dat
     && ["fullName", "cedula", "email", "phone", "address", "postcode"].every((key) => typeof customer?.[key] === "string" && String(customer[key]).trim())
     && provinceOk && cityOk
     && /^\d{10}$/.test(String(customer?.cedula))
+    && /^\d{6}$/.test(String(customer?.postcode))
     && ["subtotalBase0", "subtotalBase15", "ivaAmount", "total"].every((key) => Number.isFinite(Number(totals?.[key])))
     && Number(totals.total) >= 1
     && Math.abs(Number(totals.total) - (Number(totals.subtotalBase0) + Number(totals.subtotalBase15) + Number(totals.ivaAmount))) < 0.011;

@@ -56,6 +56,7 @@ function validBody(value: unknown): value is CallbackBody {
   const provinceOk = ECUADOR_PROVINCES.includes(province as (typeof ECUADOR_PROVINCES)[number]);
   return ["fullName", "cedula", "email", "phone", "address", "postcode"].every((key) => typeof customer[key] === "string" && customer[key].trim())
     && provinceOk && citiesForProvince(province).includes(city)
+    && /^\d{6}$/.test(String(customer.postcode))
     && value.items.length > 0
     && value.items.every((item) => isRecord(item) && typeof item.variantId === "string" && typeof item.quantity === "number" && Number.isInteger(item.quantity) && item.quantity > 0 && (item.giftVariantIds === undefined || (Array.isArray(item.giftVariantIds) && item.giftVariantIds.every((id) => typeof id === "string"))));
 }

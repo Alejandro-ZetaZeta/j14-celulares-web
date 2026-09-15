@@ -1,10 +1,14 @@
 import CheckoutClient from "./CheckoutClient";
 import { requireCompletedClient } from "@/lib/auth/roles";
+import { cookies } from "next/headers";
+import { createServerClient } from "@insforge/sdk/ssr";
 import { Suspense } from "react";
 
 async function CheckoutContent() {
   const profile = await requireCompletedClient();
-  return <CheckoutClient profile={profile} />;
+  const client = createServerClient({ cookies: await cookies() });
+  const { data: authData } = await client.auth.getCurrentUser();
+  return <CheckoutClient profile={profile} initialEmail={authData?.user?.email ?? ""} />;
 }
 
 export default function CheckoutPage() {
