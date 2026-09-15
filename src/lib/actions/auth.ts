@@ -256,7 +256,7 @@ export async function updateClientProfileAction(formData: FormData) {
     (today.getUTCMonth() === parsedDate.getUTCMonth() && today.getUTCDate() < parsedDate.getUTCDate()) ? 1 : 0
   ) : 0;
 
-  if (!fullName || fullName.length > 100 || !/^\d{1,10}$/.test(phone) || !/^\d{1,10}$/.test(cedula) || !parsedDate || Number.isNaN(parsedDate.getTime()) || parsedDate > today || age < 18 || age > 120 || address.length > 250) {
+  if (!fullName || fullName.length > 100 || !/^\d{1,10}$/.test(phone) || !/^\d{10}$/.test(cedula) || !parsedDate || Number.isNaN(parsedDate.getTime()) || parsedDate > today || age < 18 || age > 120 || address.length > 250) {
     return { error: { message: "Ingresa tu nombre, un teléfono válido, una cédula válida y una fecha de nacimiento válida para mayores de 18 años." } };
   }
 

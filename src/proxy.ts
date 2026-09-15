@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { updateSession, type CookieOptions } from "@insforge/sdk/ssr/middleware";
 import { createServerClient } from "@insforge/sdk/ssr";
+import { getMissingProfileFields } from "@/lib/auth/profile-completeness";
 
 /**
  * Next.js 16 Proxy — replaces middleware.ts
@@ -91,7 +92,7 @@ export async function proxy(request: NextRequest) {
 
   const { data: profile } = await client.database
     .from("user_profiles")
-    .select("role, is_profile_completed, date_of_birth")
+    .select("role, is_profile_completed, full_name, cedula, phone, date_of_birth, address, province, city, postcode")
     .eq("id", authData.user.id)
     .single();
   const role = profile?.role as "admin" | "technician" | "client" | undefined;
@@ -99,11 +100,15 @@ export async function proxy(request: NextRequest) {
   if (isClientRoute) {
     if (role === "technician") return redirect("/admin/servicio-tecnico");
     if (role !== "client" && role !== "admin") return redirect("/login");
-    if (role === "client" && (!profile?.is_profile_completed || !profile?.date_of_birth) && pathname !== "/cliente/completar-perfil" && !isTermsAcceptanceRoute) {
-      return redirect("/cliente/completar-perfil");
-    }
-    if (role === "client" && profile?.is_profile_completed && pathname === "/cliente/completar-perfil") {
-      return redirect("/cliente/dashboard");
+    if (role === "client") {
+      const missing = getMissingProfileFields(profile);
+      const incomplete = !profile?.is_profile_completed || missing.length > 0;
+      if (incomplete && pathname !== "/cliente/completar-perfil" && !isTermsAcceptanceRoute) {
+        return redirect(`/cliente/completar-perfil${missing.length ? `?missing=${missing.join(",")}` : ""}`);
+      }
+      if (!incomplete && pathname === "/cliente/completar-perfil") {
+        return redirect("/cliente/dashboard");
+      }
     }
   }
 

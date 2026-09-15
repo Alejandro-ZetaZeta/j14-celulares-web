@@ -80,13 +80,8 @@ export default function CheckoutClient({ profile, initialEmail = "" }: { profile
     validation.id = "dataweb-validations";
     validation.src = "https://www.datafast.com.ec/js/dfAdditionalValidations1.js";
     validation.async = true;
-    const form = document.createElement("form");
-    form.action = `${window.location.origin}/api/payments/dataweb-result`;
-    form.className = "paymentWidgets";
-    form.dataset.brands = "VISA MASTER DINERS DISCOVER AMEX";
-    document.body.append(form);
     document.head.append(widget, validation);
-    return () => { form.remove(); widget.remove(); validation.remove(); };
+    return () => { widget.remove(); validation.remove(); };
   }, [checkoutId]);
 
   function update(field: keyof CustomerForm, value: string) { setCustomer((current) => ({ ...current, [field]: value })); }
@@ -137,12 +132,12 @@ export default function CheckoutClient({ profile, initialEmail = "" }: { profile
     } catch (caught) { setPaying(false); setError(caught instanceof Error ? caught.message : "No se pudo abrir Dataweb."); }
   }
 
-  if (!items.length) return <main className="container-wide flex min-h-[65vh] items-center justify-center px-5 py-28"><div className="text-center"><p className="catalog-kicker">Checkout</p><h1 className="mt-2 text-display">Tu carrito esta vacio</h1><Link href="/catalogo" className="btn-primary mt-6 inline-flex">Volver al catalogo</Link></div></main>;
+  if (!items.length) return <main className="container-wide flex min-h-[65vh] items-center justify-center px-5 py-16"><div className="text-center"><p className="catalog-kicker">Checkout</p><h1 className="mt-2 text-display">Tu carrito esta vacio</h1><Link href="/catalogo" className="btn-primary mt-6 inline-flex">Volver al catalogo</Link></div></main>;
 
   const cityOptions = newAddress.province ? citiesForProvince(newAddress.province) : [];
 
   return (
-    <main className="container-wide px-5 pb-24 pt-28">
+    <main className="container-wide px-5 pb-24 pt-8">
       <div className="mb-10 max-w-2xl">
         <p className="catalog-kicker">Checkout seguro · Dataweb Sandbox</p>
         <h1 className="mt-2 text-display">Completa tu compra</h1>
@@ -171,6 +166,11 @@ export default function CheckoutClient({ profile, initialEmail = "" }: { profile
             <div className="flex justify-between border-t border-[var(--border)] pt-4 text-[20px] font-bold"><span>Total</span><span>{formatCurrency(totals.total)}</span></div>
           </div>
           <p className="mt-5 text-[11px] leading-4 text-[var(--text-tertiary)]">Ambiente Sandbox. No se realizara cargo real.</p>
+          <div className="mt-5 border-t border-[var(--border)] pt-5">
+            {error && <p className="mb-3 rounded-[var(--radius-sm)] bg-red-50 px-4 py-3 text-[13px] text-red-700">{error}</p>}
+            {status && !checkoutId && <p className="mb-3 text-[13px] text-[var(--text-secondary)]">{status}</p>}
+            {!checkoutId && <button type="button" onClick={() => void proceed()} disabled={paying} className="btn-primary w-full justify-center disabled:opacity-50">{paying ? "Preparando..." : "Continuar con Dataweb"}</button>}
+          </div>
         </aside>
         <section className="order-2 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-8 lg:order-1">
           <h2 className="text-[20px] font-bold">Datos del cliente</h2>
@@ -220,12 +220,20 @@ export default function CheckoutClient({ profile, initialEmail = "" }: { profile
             </div>
           )}
         </section>
-        <div className="order-3 flex flex-col gap-5">
-          {error && <p className="mt-5 rounded-[var(--radius-sm)] bg-red-50 px-4 py-3 text-[13px] text-red-700">{error}</p>}
-          {status && <p className="mt-5 text-[13px] text-[var(--text-secondary)]">{status}</p>}
-          {!checkoutId ? <button type="button" onClick={() => void proceed()} disabled={paying} className="btn-primary mt-7 w-full disabled:opacity-50">{paying ? "Preparando..." : "Continuar con Dataweb"}</button> : <form action="/api/payments/dataweb-result" className="paymentWidgets mt-7" data-brands="VISA MASTER DINERS DISCOVER AMEX" />}
-        </div>
       </div>
+      {checkoutId && (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/55 p-4">
+          <div className="w-full max-w-xl rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-6 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <p className="catalog-kicker">Pago seguro</p>
+              <button type="button" onClick={() => { setCheckoutId(null); setStatus(""); setPaying(false); }} className="text-[13px] font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)]">Cancelar</button>
+            </div>
+            <h2 className="mt-2 text-[20px] font-bold">Completa los datos de tu tarjeta</h2>
+            {status && <p className="mt-2 text-[13px] text-[var(--text-secondary)]">{status}</p>}
+            <form action="/api/payments/dataweb-result" className="paymentWidgets mt-5 w-full" data-brands="VISA MASTER DINERS DISCOVER AMEX" />
+          </div>
+        </div>
+      )}
     </main>
   );
 }

@@ -6,6 +6,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createServerClient } from "@insforge/sdk/ssr";
 import type { UserProfile } from "@/types/database";
+import { getMissingProfileFields } from "@/lib/auth/profile-completeness";
 
 export type AppRole = "admin" | "technician" | "client";
 
@@ -74,8 +75,11 @@ export async function requireCompletedClient(): Promise<UserProfile> {
   if (!profile || !["client", "admin"].includes(profile.role)) {
     redirect("/login");
   }
-  if (profile.role === "client" && (!profile.is_profile_completed || !profile.date_of_birth)) {
-    redirect("/cliente/completar-perfil");
+  if (profile.role === "client") {
+    const missing = getMissingProfileFields(profile);
+    if (!profile.is_profile_completed || missing.length > 0) {
+      redirect(`/cliente/completar-perfil${missing.length ? `?missing=${missing.join(",")}` : ""}`);
+    }
   }
   return profile;
 }
