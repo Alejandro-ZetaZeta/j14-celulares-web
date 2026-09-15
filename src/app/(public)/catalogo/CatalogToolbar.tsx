@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useRef } from "react";
 
 interface CatalogToolbarProps {
   chips: { slug: string; label: string }[];
@@ -14,6 +15,11 @@ export default function CatalogToolbar({ chips, count }: CatalogToolbarProps) {
   const active = params.get("coleccion") ?? "all";
   const query = params.get("q") ?? "";
   const sort = params.get("orden") ?? "newest";
+  const pmin = params.get("pmin") ?? "";
+  const pmax = params.get("pmax") ?? "";
+  const priceActive = Boolean(pmin || pmax);
+  const minRef = useRef<HTMLInputElement>(null);
+  const maxRef = useRef<HTMLInputElement>(null);
 
   function href(values: Record<string, string | null>) {
     const next = new URLSearchParams(params.toString());
@@ -22,6 +28,11 @@ export default function CatalogToolbar({ chips, count }: CatalogToolbarProps) {
       else next.delete(key);
     }
     return `/catalogo${next.toString() ? `?${next.toString()}` : ""}`;
+  }
+
+  function applyPrice(event: React.FormEvent) {
+    event.preventDefault();
+    router.push(href({ pmin: minRef.current?.value.trim() || null, pmax: maxRef.current?.value.trim() || null }));
   }
 
   return (
@@ -35,7 +46,7 @@ export default function CatalogToolbar({ chips, count }: CatalogToolbarProps) {
           <input id="catalog-search" name="q" defaultValue={query} placeholder="Buscar marca o modelo" form="catalog-search-form" />
         </label>
         <form id="catalog-search-form" action="/catalogo" className="hidden">
-          {(["coleccion", "brand", "model", "orden"] as const).map((key) => {
+          {(["coleccion", "brand", "model", "orden", "pmin", "pmax"] as const).map((key) => {
             const value = params.get(key);
             return value ? <input key={key} type="hidden" name={key} value={value} /> : null;
           })}
@@ -52,6 +63,30 @@ export default function CatalogToolbar({ chips, count }: CatalogToolbarProps) {
             </select>
           </label>
         </div>
+      </div>
+      <div className="price-filter">
+        <span className="filter-label">Precio</span>
+        <form className="price-range" action="/catalogo" onSubmit={applyPrice}>
+          {(["coleccion", "brand", "model", "orden", "q"] as const).map((key) => {
+            const value = params.get(key);
+            return value ? <input key={key} type="hidden" name={key} value={value} /> : null;
+          })}
+          <label className="price-field">
+            <span aria-hidden="true">$</span>
+            <input ref={minRef} type="number" inputMode="numeric" min={0} step={1} name="pmin" placeholder="Mín" defaultValue={pmin} aria-label="Precio mínimo" />
+          </label>
+          <span className="price-range-sep" aria-hidden="true">–</span>
+          <label className="price-field">
+            <span aria-hidden="true">$</span>
+            <input ref={maxRef} type="number" inputMode="numeric" min={0} step={1} name="pmax" placeholder="Máx" defaultValue={pmax} aria-label="Precio máximo" />
+          </label>
+          <button type="submit" className="price-apply">Aplicar</button>
+        </form>
+        {priceActive && (
+          <button type="button" className="price-clear" onClick={() => router.push(href({ pmin: null, pmax: null }))}>
+            Limpiar precio
+          </button>
+        )}
       </div>
       <div className="catalog-chip-row" aria-label="Filtrar catálogo">
         {chips.map((chip) => (

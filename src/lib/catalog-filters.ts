@@ -52,11 +52,14 @@ export function getCatalogChips(
   return chips;
 }
 
+export function productPrice(product: ProductWithVariants) {
+  return Math.min(...product.product_variants.map((variant) => variant.price));
+}
+
 export function sortProducts(products: ProductWithVariants[], sort: string) {
   return [...products].sort((a, b) => {
     if (sort === "price-asc" || sort === "price-desc") {
-      const price = (product: ProductWithVariants) => Math.min(...product.product_variants.map((variant) => variant.price));
-      return (price(a) - price(b)) * (sort === "price-asc" ? 1 : -1);
+      return (productPrice(a) - productPrice(b)) * (sort === "price-asc" ? 1 : -1);
     }
     if (sort === "name") return `${a.brand} ${a.model}`.localeCompare(`${b.brand} ${b.model}`);
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();

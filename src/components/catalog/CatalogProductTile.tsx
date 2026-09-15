@@ -42,7 +42,7 @@ export default function CatalogProductTile({ product, whatsappNumber }: { produc
       >
         <div className="catalog-tile-image">
           {product.image_url ? (
-            <Image src={product.image_url} alt={`${product.brand} ${product.model}`} fill className="catalog-tile-image-img object-contain p-5" sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw" />
+            <Image src={product.image_url} alt={`${product.brand} ${product.model}`} fill className="catalog-tile-image-img object-contain p-5" sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, (max-width: 1536px) 25vw, 20vw" />
           ) : (
             <div className="flex h-full items-center justify-center text-[var(--text-tertiary)]">
               <svg width="42" height="42" viewBox="0 0 48 48" fill="none" aria-hidden="true"><rect width="48" height="48" rx="12" fill="currentColor" opacity=".18" /><path d="M16 17h16v14H16z" stroke="currentColor" strokeWidth="2" /><path d="m18 28 4-4 3 3 2-2 3 3" stroke="currentColor" strokeWidth="2" /></svg>
