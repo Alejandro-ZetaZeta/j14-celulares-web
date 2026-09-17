@@ -9,13 +9,55 @@ import type { BrandModelGroup } from "@/lib/data/catalog";
 import { normalize } from "@/lib/catalog-filters";
 import CartButton from "@/components/cart/CartButton";
 
-interface NavbarClientProps { brandGroups: BrandModelGroup[] }
-type DropdownKey = "brands" | null;
+interface NavbarClientProps { brandGroups: BrandModelGroup[]; whatsappNumber: string }
+type DropdownKey = "brands" | "contact" | null;
 
 const links = [
   { href: "/catalogo", label: "Catálogo" },
   { href: "/servicio-tecnico", label: "Servicio Técnico" },
 ];
+
+const CONTACT = {
+  email: "celularesj14593@gmail.com",
+  instagram: "https://www.instagram.com/celularesj14?stkn=ZDNlZDc0MzIxNw==",
+  facebook: "https://www.facebook.com/celularesj14/",
+};
+
+function formatWhatsapp(number: string) {
+  const digits = number.replace(/\D/g, "");
+  if (digits.startsWith("593") && digits.length === 12) {
+    const rest = digits.slice(3);
+    return `+593 ${rest.slice(0, 2)} ${rest.slice(2, 5)} ${rest.slice(5)}`;
+  }
+  return `+${digits}`;
+}
+
+function CopyIcon() {
+  return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" strokeWidth="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>;
+}
+
+function ContactMenu({ whatsappNumber, copied, onCopy, onNavigate }: { whatsappNumber: string; copied: boolean; onCopy: () => void; onNavigate?: () => void }) {
+  const rowClass = "flex w-full items-center gap-3 rounded-[var(--radius-sm)] px-3 py-2.5 text-[14px] font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-secondary)]";
+  return (
+    <>
+      <div className={`${rowClass} justify-between`}>
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[.12em] text-[var(--text-tertiary)]">WhatsApp</p>
+          <p className="select-all font-mono text-[13px] font-normal text-[var(--text-primary)]">{formatWhatsapp(whatsappNumber)}</p>
+        </div>
+        <button type="button" onClick={onCopy} className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[var(--border)] px-2.5 py-1 text-[11px] font-semibold text-[var(--text-secondary)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]" aria-label="Copiar número de WhatsApp">
+          <CopyIcon />{copied ? "Copiado" : "Copiar"}
+        </button>
+      </div>
+      <a href={CONTACT.instagram} target="_blank" rel="noopener noreferrer" onClick={onNavigate} className={rowClass}>Ver el Instagram de J14</a>
+      <a href={CONTACT.facebook} target="_blank" rel="noopener noreferrer" onClick={onNavigate} className={rowClass}>Ver la página de Facebook de J14</a>
+      <a href={`mailto:${CONTACT.email}`} onClick={onNavigate} className="flex w-full flex-col items-start gap-0.5 rounded-[var(--radius-sm)] px-3 py-2.5 text-[14px] font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-secondary)]">
+        <span className="text-[11px] font-semibold uppercase tracking-[.12em] text-[var(--text-tertiary)]">Correo de contacto</span>
+        <span className="select-all whitespace-nowrap font-normal">{CONTACT.email}</span>
+      </a>
+    </>
+  );
+}
 
 function SearchIcon({ size = 16 }: { size?: number }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="6.5" stroke="currentColor" strokeWidth="1.8" /><path d="m16 16 4.5 4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>;
@@ -25,13 +67,15 @@ function PersonIcon() {
   return <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="8" r="3.25" stroke="currentColor" strokeWidth="1.8" /><path d="M5.5 19.5c.75-3.05 3.05-4.75 6.5-4.75s5.75 1.7 6.5 4.75" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>;
 }
 
-export default function NavbarClient({ brandGroups }: NavbarClientProps) {
+export default function NavbarClient({ brandGroups, whatsappNumber }: NavbarClientProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [open, setOpen] = useState<DropdownKey>(null);
   const [activeBrand, setActiveBrand] = useState(brandGroups[0]?.brand ?? "");
   const [mobileExpanded, setMobileExpanded] = useState(false);
+  const [mobileContactOpen, setMobileContactOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [search, setSearch] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -55,6 +99,15 @@ export default function NavbarClient({ brandGroups }: NavbarClientProps) {
 
   const cancelClose = () => { if (closeTimer.current) clearTimeout(closeTimer.current); };
   const scheduleClose = () => { cancelClose(); closeTimer.current = setTimeout(() => setOpen(null), 140); };
+  const copyWhatsapp = async () => {
+    try {
+      await navigator.clipboard.writeText(`+${whatsappNumber.replace(/\D/g, "")}`);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch {
+      // Clipboard API unavailable; the number stays selectable as text.
+    }
+  };
   const active = (href: string) => href === "/" ? pathname === href : pathname.startsWith(href);
   const query = normalize(search);
   const suggestions = query
@@ -79,6 +132,14 @@ export default function NavbarClient({ brandGroups }: NavbarClientProps) {
              {links.map((link) => <li key={link.href}><Link href={link.href} className={`navbar-nav-link text-[14px] font-medium transition-colors ${active(link.href) ? "is-active text-[var(--accent)]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>{link.label}</Link></li>)}
              <li onMouseEnter={() => { cancelClose(); setOpen("brands"); }}><button type="button" className={`navbar-nav-link text-[14px] font-medium ${open === "brands" ? "is-active text-[var(--text-primary)]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`} aria-haspopup="true" aria-expanded={open === "brands"} onClick={() => setOpen(open === "brands" ? null : "brands")} onFocus={() => setOpen("brands")}>Marcas</button></li>
              <li><Link href="/nosotros" className={`navbar-nav-link text-[14px] font-medium transition-colors ${active("/nosotros") ? "is-active text-[var(--accent)]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>Nosotros</Link></li>
+             <li className="relative" onMouseEnter={() => { cancelClose(); setOpen("contact"); }}>
+               <button type="button" className={`navbar-nav-link text-[14px] font-medium ${open === "contact" ? "is-active text-[var(--text-primary)]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`} aria-haspopup="true" aria-expanded={open === "contact"} onClick={() => setOpen(open === "contact" ? null : "contact")} onFocus={() => setOpen("contact")}>Contáctanos</button>
+               <AnimatePresence>
+                 {open === "contact" && <motion.div initial={{ opacity: 0, y: -6, scale: .98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -6, scale: .98 }} transition={{ duration: .16 }} onMouseEnter={cancelClose} onMouseLeave={scheduleClose} className="absolute right-0 top-full z-50 mt-2 w-[280px] rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] p-2 shadow-[0_12px_28px_rgba(0,0,0,.12)]">
+                   <ContactMenu whatsappNumber={whatsappNumber} copied={copied} onCopy={() => void copyWhatsapp()} onNavigate={() => setOpen(null)} />
+                 </motion.div>}
+               </AnimatePresence>
+             </li>
           </ul>
           </div>
           <div className="ml-auto flex items-center gap-3">
@@ -106,7 +167,7 @@ export default function NavbarClient({ brandGroups }: NavbarClientProps) {
           {open === "brands" && <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} onMouseEnter={cancelClose} onMouseLeave={scheduleClose} className="absolute left-0 right-0 top-full border-t border-[var(--border)] bg-[var(--surface)] shadow-[0_18px_38px_rgba(0,0,0,.08)]"><div className="container-wide py-6"><div className="mb-4 flex items-center justify-between"><p className="catalog-kicker">Explora por marca</p><Link href="/catalogo" className="text-[13px] font-medium text-[var(--accent)]" onClick={() => setOpen(null)}>Ver todo el catálogo →</Link></div><div className="grid min-h-[220px] grid-cols-[minmax(130px,190px)_minmax(0,1fr)] overflow-hidden rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg-secondary)]"><div className="border-r border-[var(--border)] p-2">{brandGroups.map((group) => <Link key={group.brand} href={`/catalogo?brand=${encodeURIComponent(group.brand)}`} onMouseEnter={() => setActiveBrand(group.brand)} onFocus={() => setActiveBrand(group.brand)} onClick={() => setOpen(null)} className={`flex w-full items-center justify-between rounded-[var(--radius-sm)] px-3 py-2.5 text-left text-[14px] font-semibold transition-colors ${activeBrand === group.brand ? "bg-[var(--surface)] text-[var(--accent)] shadow-sm" : "text-[var(--text-secondary)] hover:bg-[var(--surface)] hover:text-[var(--text-primary)]"}`}>{group.brand}<span className="text-[var(--text-tertiary)]" aria-hidden="true">›</span></Link>)}</div><div className="min-w-0 bg-[var(--surface)] p-5">{selectedGroup && <><div className="flex items-baseline justify-between gap-3"><h3 className="text-[18px] font-semibold tracking-[-.02em] text-[var(--text-primary)]">{selectedGroup.brand}</h3><span className="text-[12px] text-[var(--text-tertiary)]">{selectedGroup.models.length} modelos</span></div><div className="mt-4 grid max-h-[220px] grid-cols-2 gap-x-5 gap-y-1 overflow-y-auto pr-2 sm:grid-cols-3">{selectedGroup.models.map((model) => <Link key={model} href={`/catalogo?brand=${encodeURIComponent(selectedGroup.brand)}&model=${encodeURIComponent(model)}`} onClick={() => setOpen(null)} className="rounded-[var(--radius-sm)] px-2 py-2 text-[13px] text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--accent)]">{model}</Link>)}</div></>}</div></div></div></motion.div>}
         </AnimatePresence>
       </header>
-      <AnimatePresence>{mobileOpen && <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} className="navbar-glass navbar-glass-scrolled fixed inset-x-0 top-[52px] z-40 border-b border-[var(--border)] md:hidden"><ul className="container-apple py-4"><li className="mb-2"><form onSubmit={submitSearch} className="catalog-search flex w-full items-center gap-3"><SearchIcon size={18} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar marca o modelo" aria-label="Buscar marca o modelo" /></form></li>{links.map((link) => <li key={link.href}><Link href={link.href} onClick={() => setMobileOpen(false)} className="block rounded-[var(--radius-sm)] px-2 py-3 text-[17px] font-medium text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]">{link.label}</Link></li>)}<li><button type="button" onClick={() => setMobileExpanded((value) => !value)} className="flex w-full items-center justify-between rounded-[var(--radius-sm)] px-2 py-3 text-[17px] font-medium text-[var(--text-primary)]">Marcas <span>{mobileExpanded ? "−" : "+"}</span></button>{mobileExpanded && <ul className="border-l border-[var(--border-strong)] pb-2 pl-3">{brandGroups.map((group) => <li key={group.brand}><Link href={`/catalogo?brand=${encodeURIComponent(group.brand)}`} onClick={() => setMobileOpen(false)} className="block py-2 text-[15px] font-semibold text-[var(--text-primary)]">{group.brand}</Link>{group.models.slice(0, 4).map((model) => <Link key={model} href={`/catalogo?brand=${encodeURIComponent(group.brand)}&model=${encodeURIComponent(model)}`} onClick={() => setMobileOpen(false)} className="block py-1 text-[14px] text-[var(--text-secondary)]">{model}</Link>)}</li>)}</ul>}</li><li><Link href="/nosotros" onClick={() => setMobileOpen(false)} className="block rounded-[var(--radius-sm)] px-2 py-3 text-[17px] font-medium text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]">Nosotros</Link></li><li className="mt-2 border-t border-[var(--border)] pt-3"><Link href="/cliente/dashboard" onClick={() => setMobileOpen(false)} className="flex items-center justify-center rounded-[var(--radius-sm)] bg-[var(--accent)] px-4 py-3 text-white" aria-label="Mi cuenta"><PersonIcon /></Link></li></ul></motion.div>}</AnimatePresence>
+      <AnimatePresence>{mobileOpen && <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} className="navbar-glass navbar-glass-scrolled fixed inset-x-0 top-[52px] z-40 border-b border-[var(--border)] md:hidden"><ul className="container-apple py-4"><li className="mb-2"><form onSubmit={submitSearch} className="catalog-search flex w-full items-center gap-3"><SearchIcon size={18} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar marca o modelo" aria-label="Buscar marca o modelo" /></form></li>{links.map((link) => <li key={link.href}><Link href={link.href} onClick={() => setMobileOpen(false)} className="block rounded-[var(--radius-sm)] px-2 py-3 text-[17px] font-medium text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]">{link.label}</Link></li>)}<li><button type="button" onClick={() => setMobileExpanded((value) => !value)} className="flex w-full items-center justify-between rounded-[var(--radius-sm)] px-2 py-3 text-[17px] font-medium text-[var(--text-primary)]">Marcas <span>{mobileExpanded ? "−" : "+"}</span></button>{mobileExpanded && <ul className="border-l border-[var(--border-strong)] pb-2 pl-3">{brandGroups.map((group) => <li key={group.brand}><Link href={`/catalogo?brand=${encodeURIComponent(group.brand)}`} onClick={() => setMobileOpen(false)} className="block py-2 text-[15px] font-semibold text-[var(--text-primary)]">{group.brand}</Link>{group.models.slice(0, 4).map((model) => <Link key={model} href={`/catalogo?brand=${encodeURIComponent(group.brand)}&model=${encodeURIComponent(model)}`} onClick={() => setMobileOpen(false)} className="block py-1 text-[14px] text-[var(--text-secondary)]">{model}</Link>)}</li>)}</ul>}</li><li><Link href="/nosotros" onClick={() => setMobileOpen(false)} className="block rounded-[var(--radius-sm)] px-2 py-3 text-[17px] font-medium text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]">Nosotros</Link></li><li><button type="button" onClick={() => setMobileContactOpen((value) => !value)} className="flex w-full items-center justify-between rounded-[var(--radius-sm)] px-2 py-3 text-[17px] font-medium text-[var(--text-primary)]">Contáctanos <span>{mobileContactOpen ? "−" : "+"}</span></button>{mobileContactOpen && <div className="border-l border-[var(--border-strong)] pb-2 pl-2"><ContactMenu whatsappNumber={whatsappNumber} copied={copied} onCopy={() => void copyWhatsapp()} onNavigate={() => setMobileOpen(false)} /></div>}</li><li className="mt-2 border-t border-[var(--border)] pt-3"><Link href="/cliente/dashboard" onClick={() => setMobileOpen(false)} className="flex items-center justify-center rounded-[var(--radius-sm)] bg-[var(--accent)] px-4 py-3 text-white" aria-label="Mi cuenta"><PersonIcon /></Link></li></ul></motion.div>}</AnimatePresence>
       <div className="h-[52px]" aria-hidden="true" />
     </>
   );

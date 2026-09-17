@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { insforgeAdmin } from "@/lib/insforge-admin";
+import { createInsforgeServerClient } from "@/lib/insforge-server";
 import { buildDatawebParams, datawebBaseUrl, type DatawebCustomer, type DatawebItem } from "@/lib/dataweb";
 import { citiesForProvince, ECUADOR_PROVINCES } from "@/lib/ecuador";
 import type { CartTotals } from "@/types/cart";
 
-function valid(input: unknown): input is { customer: DatawebCustomer; items: DatawebItem[]; totals: CartTotals; promotionCode?: string } {
+function valid(input: unknown): input is { customer: DatawebCustomer; items: DatawebItem[]; totals: CartTotals; promotionCode?: string; saveCard?: boolean } {
   if (!input || typeof input !== "object") return false;
   const value = input as Record<string, unknown>;
   const customer = value.customer as Record<string, unknown> | undefined;
@@ -32,11 +33,22 @@ export async function POST(request: Request) {
   const customer = body.customer;
   const items = body.items;
   const totals = body.totals;
-  const payload = { customer, items, totals, promotionCode: body.promotionCode?.trim().toUpperCase() || null };
+  const saveCard = Boolean(body.saveCard);
+
+  let userId: string | null = null;
+  try {
+    const insforge = await createInsforgeServerClient();
+    const { data: { user } } = await insforge.auth.getCurrentUser();
+    userId = user?.id || null;
+  } catch {
+    userId = null;
+  }
+
+  const payload = { customer, items, totals, promotionCode: body.promotionCode?.trim().toUpperCase() || null, saveCard, userId };
   const response = await fetch(`${datawebBaseUrl()}/v1/checkouts`, {
     method: "POST",
     headers: { Authorization: `Bearer ${process.env.DATAWEB_AUTH_TOKEN}`, "Content-Type": "application/x-www-form-urlencoded" },
-    body: buildDatawebParams({ merchantTransactionId, customer, items, totals, clientIp }).toString(),
+    body: buildDatawebParams({ merchantTransactionId, customer, items, totals, clientIp, createRegistration: saveCard }).toString(),
   });
   const data = await response.json() as { id?: string; result?: { code?: string; description?: string } };
   if (!response.ok || data.result?.code !== "000.200.100" || !data.id) return NextResponse.json({ error: data.result?.description || "Dataweb no pudo crear checkout." }, { status: 502 });

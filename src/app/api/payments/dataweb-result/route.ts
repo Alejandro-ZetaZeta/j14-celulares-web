@@ -31,6 +31,28 @@ export async function GET(request: Request) {
   await insforgeAdmin.database.from("dataweb_payment_attempts").update({ status: approved ? "PROCESSING" : "REJECTED", transaction_id: transaction.id || null, response_payload: transaction, updated_at: new Date().toISOString() }).eq("id", attempt.id);
   if (!approved) return NextResponse.redirect(new URL(`/checkout/confirmacion?estado=error&codigo=${encodeURIComponent(resultCode)}`, url));
 
+  // Save tokenized card registration if generated
+  const rawTx = transaction as Record<string, unknown>;
+  const registrationId = typeof rawTx.registrationId === "string" ? rawTx.registrationId : (Array.isArray(rawTx.registrations) && typeof (rawTx.registrations[0] as Record<string, unknown>)?.id === "string" ? ((rawTx.registrations[0] as Record<string, unknown>).id as string) : null);
+  const cardObj = (rawTx.card as Record<string, string> | undefined) || {};
+  const userId = (attempt.payload as Record<string, unknown> | null)?.userId as string | undefined;
+
+  if (registrationId && userId) {
+    try {
+      await insforgeAdmin.database.from("card_tokens").insert([{
+        user_id: userId,
+        registration_id: registrationId,
+        brand: (rawTx.paymentBrand as string) || null,
+        last4: cardObj.last4Digits || cardObj.last4 || null,
+        expiry_month: cardObj.expiryMonth || null,
+        expiry_year: cardObj.expiryYear || null,
+        holder: cardObj.holder || null,
+      }]);
+    } catch (tokenErr) {
+      console.error("[dataweb-result] error saving card token:", tokenErr);
+    }
+  }
+
   const origin = url.origin;
   const fulfillment = await fetch(`${origin}/api/payments/payment-callback`, { method: "POST", headers: { "Content-Type": "application/json", "x-dataweb-internal-secret": process.env.DATAWEB_INTERNAL_SECRET || "" }, body: JSON.stringify({ paymentTransaction: transaction.id, paymentResponse: transaction, ...attempt.payload }) });
   const result = await fulfillment.json() as { orderId?: string };

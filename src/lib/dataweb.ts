@@ -44,6 +44,7 @@ export function buildDatawebParams(input: {
   items: DatawebItem[];
   totals: CartTotals;
   clientIp: string;
+  createRegistration?: boolean;
 }): URLSearchParams {
   const params = new URLSearchParams();
   const customer = input.customer;
@@ -55,6 +56,9 @@ export function buildDatawebParams(input: {
   append("currency", "USD");
   append("paymentType", "DB");
   append("merchantTransactionId", input.merchantTransactionId);
+  if (input.createRegistration) {
+    append("createRegistration", "true");
+  }
   append("customer.givenName", person.givenName);
   append("customer.middleName", person.middleName);
   append("customer.surname", person.surname);

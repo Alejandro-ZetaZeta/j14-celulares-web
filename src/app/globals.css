@@ -1019,6 +1019,7 @@ select:focus-visible {
   display: inline-flex;
   align-items: center;
   min-height: 32px;
+  white-space: nowrap;
 }
 
 .navbar-nav-link::after {
@@ -1117,3 +1118,47 @@ select:focus-visible {
   .print-footer .brand-left { left: 0; }
   .print-footer .brand-right { right: 0; }
 }
+
+/* ── Datafast Payment Widget Styles ────────────────────────── */
+.wpwl-container {
+  margin: 0 auto !important;
+  max-width: 100% !important;
+  width: 100% !important;
+}
+
+.wpwl-form-card {
+  border-radius: var(--radius-lg) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+  margin: 0 auto !important;
+  max-width: 100% !important;
+  padding: 20px !important;
+  background: #f8fafc !important;
+  border: 1px solid var(--border) !important;
+}
+
+.dark .wpwl-form-card {
+  background: #18181b !important;
+  border-color: var(--border-strong) !important;
+}
+
+.datafast-custom-fields {
+  margin-top: 14px;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid var(--border);
+}
+
+.dark .datafast-custom-fields {
+  background: rgba(39, 39, 42, 0.85);
+  border-color: var(--border-strong);
+}
+
+.datafast-official-verified {
+  background: #ffffff;
+  border-radius: var(--radius-sm);
+  padding: 8px 14px;
+  border: 1px solid #e5e7eb;
+}
+

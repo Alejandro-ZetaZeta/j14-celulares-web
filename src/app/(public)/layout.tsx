@@ -9,10 +9,10 @@ export default async function PublicLayout({ children }: { children: React.React
   return (
     <CartProvider initialTaxRate={settings.taxRate}>
       <Suspense fallback={<header className="navbar-glass fixed top-0 left-0 right-0 h-[48px] z-50" />}>
-        <Navbar />
+        <Navbar whatsappNumber={settings.whatsappNumber} />
       </Suspense>
       <main className="flex-1">{children}</main>
-      <Footer />
+      <Footer whatsappNumber={settings.whatsappNumber} />
     </CartProvider>
   );
 }
