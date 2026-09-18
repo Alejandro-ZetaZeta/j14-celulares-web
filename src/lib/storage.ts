@@ -8,6 +8,8 @@
  * All admin writes go through the service_role admin client, which bypasses RLS.
  */
 export const PRODUCT_IMAGES_BUCKET = "product-images";
+export const AD_IMAGES_BUCKET = "ad-images";
+
 
 const ALLOWED_MIME = new Set([
   "image/jpeg",
@@ -46,3 +48,30 @@ export function buildProductImageKey(productId: string, mime: string): string {
 export function productImageProxyUrl(key: string): string {
   return `/api/images/${key}`;
 }
+
+/**
+ * Build a storage key for an ad image. The ad id scopes the file.
+ */
+export function buildAdImageKey(adId: string, mime: string): string {
+  const ext = extForMime(mime);
+  const suffix = crypto.randomUUID().slice(0, 8);
+  return `ads/${adId}/image-${Date.now()}-${suffix}.${ext}`;
+}
+
+export function buildAdMobileImageKey(adId: string, mime: string): string {
+  const ext = extForMime(mime);
+  const suffix = crypto.randomUUID().slice(0, 8);
+  return `ads/${adId}/mobile-${Date.now()}-${suffix}.${ext}`;
+}
+
+/**
+ * Ad images are stored in the public `ad-images` bucket.
+ * The bucket is public so images can be served directly without a proxy.
+ */
+export function adImagePublicUrl(baseUrl: string, key: string): string {
+  // Strip trailing slash from baseUrl
+  const base = baseUrl.replace(/\/$/, "");
+  // InsForge storage public URL format: /api/storage/buckets/{bucket}/objects/{key}
+  return `${base}/api/storage/buckets/ad-images/objects/${encodeURIComponent(key)}`;
+}
+

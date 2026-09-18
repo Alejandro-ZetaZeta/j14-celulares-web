@@ -229,3 +229,22 @@ export interface AdminOrderItem extends OrderItem {
 export interface AdminOrderDetail extends AdminOrder {
   items: AdminOrderItem[];
 }
+
+// ── Advertising / Publicidad ─────────────────────────────────
+
+export interface Ad {
+  id: string;
+  title: string;
+  /** Desktop image URL (wide/horizontal, used on md+ screens) */
+  image_url: string;
+  image_key: string;
+  /** Mobile image URL (tall/vertical). Falls back to image_url if null. */
+  image_mobile_url: string | null;
+  image_mobile_key: string | null;
+  /** Optional click-through URL (absolute or relative path, e.g. /catalogo) */
+  link_url: string | null;
+  display_order: number;
+  is_hidden: boolean;
+  created_at: string;
+  updated_at: string;
+}

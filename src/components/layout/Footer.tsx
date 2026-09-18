@@ -46,10 +46,10 @@ export default function Footer({ whatsappNumber }: { whatsappNumber: string }) {
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent("Hola Celulares J14, quiero más información.")}`;
 
   return (
-    <footer className="bg-[var(--bg-secondary)] border-t border-[var(--border)] mt-auto">
+    <footer className="bg-(--bg-secondary) border-t border-border mt-auto">
       <div className="container-apple pt-20 pb-12">
         {/* Top grid */}
-        <div className="grid grid-cols-1 gap-10 border-b border-[var(--border)] pb-10 sm:grid-cols-2 lg:grid-cols-6">
+        <div className="grid grid-cols-1 gap-10 border-b border-border pb-10 sm:grid-cols-2 lg:grid-cols-6">
           {/* Brand */}
           <div>
             <div className="flex items-center gap-2 mb-3">
@@ -60,9 +60,9 @@ export default function Footer({ whatsappNumber }: { whatsappNumber: string }) {
                 height={24}
                 className="rounded-full object-cover"
               />
-              <span className="font-semibold text-[var(--text-primary)]">J14 Celulares</span>
+              <span className="font-semibold text-foreground">J14 Celulares</span>
             </div>
-            <p className="text-caption leading-relaxed max-w-[220px]">
+            <p className="text-caption leading-relaxed max-w-55">
               Tu tienda de confianza para smartphones y reparaciones de calidad.
             </p>
           </div>
@@ -70,7 +70,7 @@ export default function Footer({ whatsappNumber }: { whatsappNumber: string }) {
           {/* Nav Columns */}
           {footerLinks.map(({ heading, links }) => (
             <div key={heading}>
-              <h3 className="text-[12px] font-semibold uppercase tracking-widest text-[var(--text-tertiary)] mb-4">
+              <h3 className="text-[12px] font-semibold uppercase tracking-widest text-text-tertiary mb-4">
                 {heading}
               </h3>
               <ul className="space-y-2.5">
@@ -78,7 +78,7 @@ export default function Footer({ whatsappNumber }: { whatsappNumber: string }) {
                   <li key={label}>
                     <Link
                       href={href}
-                      className="text-[14px] text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors duration-150"
+                      className="text-[14px] text-text-secondary hover:text-accent transition-colors duration-150"
                     >
                       {label}
                     </Link>
@@ -90,14 +90,14 @@ export default function Footer({ whatsappNumber }: { whatsappNumber: string }) {
 
           {/* Contact */}
           <div id="contactanos" className="scroll-mt-24">
-            <h3 className="text-[12px] font-semibold uppercase tracking-widest text-[var(--text-tertiary)] mb-4">
+            <h3 className="text-[12px] font-semibold uppercase tracking-widest text-text-tertiary mb-4">
               Contáctanos
             </h3>
             <ul className="space-y-2.5">
               <li>
                 <a
                   href={`mailto:${CONTACT.email}`}
-                  className="whitespace-nowrap text-[13px] text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors duration-150"
+                  className="whitespace-nowrap text-[13px] text-text-secondary hover:text-accent transition-colors duration-150"
                 >
                   {CONTACT.email}
                 </a>
@@ -108,7 +108,7 @@ export default function Footer({ whatsappNumber }: { whatsappNumber: string }) {
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] text-[var(--text-secondary)] transition-colors duration-150 hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-text-secondary transition-colors duration-150 hover:border-accent hover:text-accent"
                 aria-label="Escríbenos por WhatsApp"
                 title="WhatsApp"
               >
@@ -118,7 +118,7 @@ export default function Footer({ whatsappNumber }: { whatsappNumber: string }) {
                 href={CONTACT.instagram}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] text-[var(--text-secondary)] transition-colors duration-150 hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-text-secondary transition-colors duration-150 hover:border-accent hover:text-accent"
                 aria-label="Síguenos en Instagram"
                 title="Instagram"
               >
@@ -128,7 +128,7 @@ export default function Footer({ whatsappNumber }: { whatsappNumber: string }) {
                 href={CONTACT.facebook}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] text-[var(--text-secondary)] transition-colors duration-150 hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-text-secondary transition-colors duration-150 hover:border-accent hover:text-accent"
                 aria-label="Síguenos en Facebook"
                 title="Facebook"
               >

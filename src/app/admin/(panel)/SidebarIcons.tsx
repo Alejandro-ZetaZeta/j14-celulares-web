@@ -169,3 +169,12 @@ export function IconTicket(props: SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
+export function IconMegaphone(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M12.5 1.5c0 0-4.5 2-8 2H2c-.55228 0-1 .44772-1 1v3c0 .55228.44772 1 1 1h.5l1 4h2l-.5-4c3.5 0 7.5 2 7.5 2V1.5Z" />
+      <path d="M13.5 4.5v5" />
+    </svg>
+  );
+}

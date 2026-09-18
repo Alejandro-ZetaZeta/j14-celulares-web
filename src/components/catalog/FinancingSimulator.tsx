@@ -54,19 +54,19 @@ export default function FinancingSimulator({
   }
 
   return (
-    <div className={`border border-[var(--border)] rounded-[var(--radius-lg)] overflow-hidden bg-[var(--surface)] ${className}`}>
+    <div className={`border border-border rounded-lg overflow-hidden bg-surface ${className}`}>
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
         aria-expanded={isOpen}
         aria-controls="financing-panel"
-        className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-[var(--bg-secondary)] transition-colors"
+        className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-(--bg-secondary) transition-colors"
       >
         <div className="flex items-center gap-3">
           <span className="text-[18px]" aria-hidden="true">💳</span>
           <div>
-            <p className="text-[15px] font-semibold text-[var(--text-primary)]">Calcular cuotas con tarjeta</p>
-            <p className="text-[13px] text-[var(--text-secondary)]">
+            <p className="text-[15px] font-semibold text-foreground">Calcular cuotas con tarjeta</p>
+            <p className="text-[13px] text-text-secondary">
               Simula el pago mensual antes de escribirnos
             </p>
           </div>
@@ -82,7 +82,7 @@ export default function FinancingSimulator({
           strokeLinejoin="round"
           animate={{ rotate: isOpen ? 180 : 0 }}
           transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
-          className="text-[var(--text-tertiary)] flex-shrink-0"
+          className="text-text-tertiary shrink-0"
           aria-hidden="true"
         >
           <polyline points="6 9 12 15 18 9" />
@@ -100,7 +100,7 @@ export default function FinancingSimulator({
             className="overflow-hidden"
           >
             <div className="px-5 pb-5 pt-1">
-              <p className="text-[12px] font-semibold text-[var(--text-tertiary)] uppercase tracking-wider mb-3">
+              <p className="text-[12px] font-semibold text-text-tertiary uppercase tracking-wider mb-3">
                 Selecciona los meses
               </p>
 
@@ -126,15 +126,15 @@ export default function FinancingSimulator({
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -8 }}
                     transition={{ duration: 0.2 }}
-                    className="bg-[var(--bg-secondary)] rounded-[var(--radius-md)] p-4"
+                    className="bg-(--bg-secondary) rounded-md p-4"
                   >
-                    <p className="text-[13px] text-[var(--text-secondary)] mb-1">
+                    <p className="text-[13px] text-text-secondary mb-1">
                       {selectedRate.months} cuotas de aproximadamente
                     </p>
-                    <p className="text-[2rem] font-light text-[var(--text-primary)] tracking-tight">
+                    <p className="text-[2rem] font-light text-foreground tracking-tight">
                       {formatPrice(installment)}
                     </p>
-                    <p className="text-[12px] text-[var(--text-tertiary)] mt-1">
+                    <p className="text-[12px] text-text-tertiary mt-1">
                       IVA incluido · Multiplicador: {selectedRate.interest_multiplier}
                     </p>
                   </motion.div>
@@ -142,7 +142,7 @@ export default function FinancingSimulator({
               </AnimatePresence>
 
               {installment === null && (
-                <p className="text-[13px] text-[var(--text-tertiary)] italic">
+                <p className="text-[13px] text-text-tertiary italic">
                   Elige un plazo para ver el valor mensual.
                 </p>
               )}

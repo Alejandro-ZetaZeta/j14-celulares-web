@@ -13,6 +13,7 @@ import {
   IconGlobe,
   IconLayers,
   IconLogout,
+  IconMegaphone,
   IconPackage,
   IconPen,
   IconPercent,
@@ -28,6 +29,7 @@ const allSidebarLinks = [
   { href: "/admin/financiamiento", label: "Financiamiento", icon: IconCard, roles: ["admin"] as AppRole[] },
   { href: "/admin/configuracion", label: "Configuración", icon: IconCog, roles: ["admin"] as AppRole[], children: [{ href: "/admin/configuracion/nosotros", label: "Página Nosotros", icon: IconPen }] },
   { href: "/admin/ventas", label: "Ventas", icon: IconReceipt, roles: ["admin"] as AppRole[] },
+  { href: "/admin/publicidad", label: "Publicidad", icon: IconMegaphone, roles: ["admin"] as AppRole[] },
   {
     href: "/admin/servicio-tecnico",
     label: "Servicio Técnico",
